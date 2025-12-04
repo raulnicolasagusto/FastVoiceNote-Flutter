@@ -4,12 +4,16 @@ import 'package:provider/provider.dart';
 import 'src/core/router/app_router.dart';
 import 'src/core/theme/app_theme.dart';
 import 'src/features/settings/providers/settings_provider.dart';
+import 'src/features/notes/providers/notes_provider.dart';
 import 'src/core/l10n/generated/app_localizations.dart';
 
 void main() {
   runApp(
     MultiProvider(
-      providers: [ChangeNotifierProvider(create: (_) => SettingsProvider())],
+      providers: [
+        ChangeNotifierProvider(create: (_) => SettingsProvider()),
+        ChangeNotifierProvider(create: (_) => NotesProvider()),
+      ],
       child: const FastVoiceNoteApp(),
     ),
   );
