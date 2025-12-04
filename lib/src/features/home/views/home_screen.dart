@@ -75,6 +75,7 @@ class HomeScreen extends StatelessWidget {
           headerSliverBuilder: (context, innerBoxIsScrolled) {
             return [
               SliverAppBar(
+                automaticallyImplyLeading: false,
                 title: Text(
                   l10n.notesTitle,
                   style: const TextStyle(fontWeight: FontWeight.bold),
@@ -98,9 +99,6 @@ class HomeScreen extends StatelessWidget {
                 ],
                 bottom: TabBar(
                   isScrollable: true,
-                  labelColor: Theme.of(context).primaryColor,
-                  unselectedLabelColor: Colors.grey,
-                  indicatorColor: Theme.of(context).primaryColor,
                   tabs: [
                     Tab(text: l10n.allTab),
                     Tab(text: '${l10n.folderTab} 1'),

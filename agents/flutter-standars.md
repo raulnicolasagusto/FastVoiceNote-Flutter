@@ -25,3 +25,4 @@ You are an expert in Flutter 3.29, TypeScript, and related libraries. You are fo
 - Account for WebAssembly HTTP header changes and use `webHtmlElementStrategy` for web image rendering control.
 - Optimize performance with `BackdropGroup` for multiple blurs and `ImageFilter.shader` for custom effects.
 - Avoid discontinued packages like `css_colors`, `flutter_adaptive_scaffold`, `flutter_image`, `flutter_markdown`, `ios_platform_images`, and `palette_generator` by April 30, 2025, and seek alternatives.
+- In Flutter 3.38+, `TabBarTheme` widget and its data class have been separated. Use `TabBarThemeData` when defining theme data in `ThemeData`, not `TabBarTheme`.

@@ -16,6 +16,11 @@ class AppTheme {
         surfaceTintColor: Colors.transparent,
       ),
       scaffoldBackgroundColor: const Color(0xFFF5F5F5), // Light grey background
+      tabBarTheme: const TabBarThemeData(
+        labelColor: Color(0xFF2196F3),
+        unselectedLabelColor: Colors.grey,
+        indicatorColor: Color(0xFF2196F3),
+      ),
     );
   }
 
@@ -27,6 +32,11 @@ class AppTheme {
         brightness: Brightness.dark,
       ),
       textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme),
+      tabBarTheme: const TabBarThemeData(
+        labelColor: Colors.white,
+        unselectedLabelColor: Colors.grey,
+        indicatorColor: Color(0xFF2196F3),
+      ),
     );
   }
 }
