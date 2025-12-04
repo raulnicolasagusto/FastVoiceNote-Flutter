@@ -1,0 +1,18 @@
+{
+  "appTitle": "FastVoiceNote",
+  "notesTitle": "Notas",
+  "searchPlaceholder": "Pesquisar notas",
+  "allTab": "Todas",
+  "folderTab": "Pasta",
+  "settingsTitle": "Configurações",
+  "darkMode": "Modo Escuro",
+  "showTips": "Mostrar Dicas",
+  "language": "Idioma",
+  "english": "Inglês",
+  "spanish": "Espanhol",
+  "portuguese": "Português",
+  "newNote": "Nova Nota",
+  "recording": "Gravando...",
+  "cancel": "Cancelar",
+  "save": "Salvar"
+}
