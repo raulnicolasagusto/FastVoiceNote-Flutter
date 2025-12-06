@@ -51,6 +51,12 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
     setState(() => _isEditingContent = false);
   }
 
+  void _onDoneEditing() {
+    FocusScope.of(context).unfocus();
+    if (_isEditingTitle) _saveTitle();
+    if (_isEditingContent) _saveContent();
+  }
+
   @override
   Widget build(BuildContext context) {
     final note = context.watch<NotesProvider>().getNoteById(widget.noteId);
@@ -99,6 +105,12 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                     onPressed: () {},
                   ),
                   const Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.check),
+                    onPressed: (_isEditingTitle || _isEditingContent)
+                        ? _onDoneEditing
+                        : null,
+                  ),
                   IconButton(icon: const Icon(Icons.search), onPressed: () {}),
                   IconButton(
                     icon: const Icon(Icons.more_vert),
