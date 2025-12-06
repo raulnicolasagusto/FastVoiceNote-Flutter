@@ -6,6 +6,8 @@ import '../../../core/l10n/generated/app_localizations.dart';
 import '../widgets/note_card.dart';
 import '../../../shared/widgets/app_drawer.dart';
 import '../../notes/providers/notes_provider.dart';
+import 'package:intl/intl.dart';
+import '../../notes/models/note.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -58,8 +60,23 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   void _onNewNote() {
-    // TODO: Implementar funcionalidad de nueva nota
+    final l10n = AppLocalizations.of(context)!;
+    final now = DateTime.now();
+    final dateStr = DateFormat.yMd().add_Hm().format(now);
+    final id = now.millisecondsSinceEpoch.toString();
+
+    final newNote = Note(
+      id: id,
+      title: '${l10n.newNote} $dateStr',
+      content: '',
+      createdAt: now,
+      updatedAt: now,
+      color: 'FFFFFFFF',
+    );
+
+    context.read<NotesProvider>().addNote(newNote);
     _toggleFab();
+    context.push('/note/$id');
   }
 
   @override
@@ -170,8 +187,8 @@ class _HomeScreenState extends State<HomeScreen>
                     child: Text(
                       l10n.quickVoiceNote,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w500,
-                          ),
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -213,8 +230,8 @@ class _HomeScreenState extends State<HomeScreen>
                     child: Text(
                       l10n.newNote,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w500,
-                          ),
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 16),

@@ -77,4 +77,9 @@ class NotesProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  void addNote(Note note) {
+    _notes.insert(0, note);
+    notifyListeners();
+  }
 }
