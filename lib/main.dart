@@ -7,12 +7,15 @@ import 'src/features/settings/providers/settings_provider.dart';
 import 'src/features/notes/providers/notes_provider.dart';
 import 'src/core/l10n/generated/app_localizations.dart';
 
+import 'src/core/database/app_database.dart';
+
 void main() {
+  final database = AppDatabase();
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
-        ChangeNotifierProvider(create: (_) => NotesProvider()),
+        ChangeNotifierProvider(create: (_) => NotesProvider(database)),
       ],
       child: const FastVoiceNoteApp(),
     ),

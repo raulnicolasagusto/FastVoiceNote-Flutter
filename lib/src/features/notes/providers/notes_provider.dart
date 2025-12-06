@@ -1,60 +1,29 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
+import '../../../core/database/app_database.dart';
 import '../models/note.dart';
 
 class NotesProvider extends ChangeNotifier {
-  final List<Note> _notes = [
-    Note(
-      id: '1',
-      title: 'Grocery 3/10/25 12:...',
-      content: '• chocolate\n• milk\n• eggs',
-      createdAt: DateTime(2025, 10, 3),
-      updatedAt: DateTime(2025, 10, 3),
-      color: 'FFFFFFFF',
-    ),
-    Note(
-      id: '2',
-      title: 'Goals',
-      content: 'Football Is A Game Played On A Rectangular Field, B...',
-      createdAt: DateTime(2022, 7, 27),
-      updatedAt: DateTime(2022, 7, 27),
-      color: 'FFF3E5F5',
-    ),
-    Note(
-      id: '3',
-      title: 'Projects',
-      content:
-          'Finish 3 new projects by the end of the...\nThank you all for wa...',
-      createdAt: DateTime(2022, 7, 27),
-      updatedAt: DateTime(2022, 7, 27),
-      color: 'FFFFFFFF',
-      hasImage: true,
-      hasVoice: true,
-    ),
-    Note(
-      id: '4',
-      title: 'Shopping',
-      content: '• Mango\n• Apples\n• Oranges',
-      createdAt: DateTime(2022, 7, 27),
-      updatedAt: DateTime(2022, 7, 27),
-      color: 'FFFFFFFF',
-    ),
-    Note(
-      id: '5',
-      title: 'To do list',
-      content: '• Go to the gym\n• Work\n• Walking.',
-      createdAt: DateTime(2022, 7, 27),
-      updatedAt: DateTime(2022, 7, 27),
-      color: 'FFFFFFFF',
-    ),
-    Note(
-      id: '6',
-      title: 'Tennis',
-      content: 'Tennis Is Also One Of The Most Popular Indoor Sports In Ma...',
-      createdAt: DateTime(2022, 7, 27),
-      updatedAt: DateTime(2022, 7, 27),
-      color: 'FFFFFFFF',
-    ),
-  ];
+  final AppDatabase _database;
+  StreamSubscription<List<NoteEntity>>? _notesSubscription;
+  List<Note> _notes = [];
+
+  NotesProvider(this._database) {
+    _init();
+  }
+
+  void _init() {
+    _notesSubscription = _database.watchAllNotes().listen((entities) {
+      _notes = entities.map((e) => Note.fromEntity(e)).toList();
+      notifyListeners();
+    });
+  }
+
+  @override
+  void dispose() {
+    _notesSubscription?.cancel();
+    super.dispose();
+  }
 
   List<Note> get notes => List.unmodifiable(_notes);
 
@@ -67,19 +36,41 @@ class NotesProvider extends ChangeNotifier {
   }
 
   void updateNote(String id, {String? title, String? content}) {
-    final index = _notes.indexWhere((note) => note.id == id);
-    if (index != -1) {
-      _notes[index] = _notes[index].copyWith(
+    final note = getNoteById(id);
+    if (note != null) {
+      final updatedNote = note.copyWith(
         title: title,
         content: content,
         updatedAt: DateTime.now(),
       );
-      notifyListeners();
+
+      _database.updateNoteData(
+        NoteEntity(
+          id: updatedNote.id,
+          title: updatedNote.title,
+          content: updatedNote.content,
+          createdAt: updatedNote.createdAt,
+          updatedAt: updatedNote.updatedAt,
+          color: updatedNote.color,
+          hasImage: updatedNote.hasImage,
+          hasVoice: updatedNote.hasVoice,
+        ),
+      );
     }
   }
 
   void addNote(Note note) {
-    _notes.insert(0, note);
-    notifyListeners();
+    _database.insertNote(
+      NoteEntity(
+        id: note.id,
+        title: note.title,
+        content: note.content,
+        createdAt: note.createdAt,
+        updatedAt: note.updatedAt,
+        color: note.color,
+        hasImage: note.hasImage,
+        hasVoice: note.hasVoice,
+      ),
+    );
   }
 }

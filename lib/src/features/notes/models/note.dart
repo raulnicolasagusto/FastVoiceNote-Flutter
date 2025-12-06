@@ -40,4 +40,17 @@ class Note {
       hasVoice: hasVoice ?? this.hasVoice,
     );
   }
+
+  factory Note.fromEntity(dynamic entity) {
+    return Note(
+      id: entity.id,
+      title: entity.title,
+      content: entity.content,
+      createdAt: entity.createdAt,
+      updatedAt: entity.updatedAt,
+      color: entity.color,
+      hasImage: entity.hasImage,
+      hasVoice: entity.hasVoice,
+    );
+  }
 }
