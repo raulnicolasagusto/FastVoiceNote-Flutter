@@ -129,7 +129,12 @@ class _HomeScreenState extends State<HomeScreen>
           body: TabBarView(
             children: [
               Padding(
-                padding: const EdgeInsets.all(8.0),
+                padding: const EdgeInsets.only(
+                  top: 0.1,
+                  left: 8,
+                  right: 8,
+                  bottom: 8,
+                ),
                 child: MasonryGridView.count(
                   crossAxisCount: 2,
                   mainAxisSpacing: 8,
