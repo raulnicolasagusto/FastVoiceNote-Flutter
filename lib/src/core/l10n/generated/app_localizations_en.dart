@@ -48,6 +48,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get newNote => 'New Note';
 
   @override
+  String get quickVoiceNote => 'Quick Voice Note';
+
+  @override
   String get recording => 'Recording...';
 
   @override

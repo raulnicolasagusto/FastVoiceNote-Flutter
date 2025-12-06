@@ -178,6 +178,12 @@ abstract class AppLocalizations {
   /// **'New Note'**
   String get newNote;
 
+  /// No description provided for @quickVoiceNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick Voice Note'**
+  String get quickVoiceNote;
+
   /// No description provided for @recording.
   ///
   /// In en, this message translates to:

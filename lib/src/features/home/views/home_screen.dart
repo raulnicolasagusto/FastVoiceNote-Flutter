@@ -7,17 +7,68 @@ import '../widgets/note_card.dart';
 import '../../../shared/widgets/app_drawer.dart';
 import '../../notes/providers/notes_provider.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen>
+    with SingleTickerProviderStateMixin {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  late AnimationController _animationController;
+  late Animation<double> _animation;
+  bool _isFabExpanded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+    _animation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOutBack,
+      reverseCurve: Curves.easeInBack,
+    );
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  void _toggleFab() {
+    setState(() {
+      _isFabExpanded = !_isFabExpanded;
+      if (_isFabExpanded) {
+        _animationController.forward();
+      } else {
+        _animationController.reverse();
+      }
+    });
+  }
+
+  void _onQuickVoiceNote() {
+    // TODO: Implementar funcionalidad de nota de voz rápida
+    _toggleFab();
+  }
+
+  void _onNewNote() {
+    // TODO: Implementar funcionalidad de nueva nota
+    _toggleFab();
+  }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
     final notes = context.watch<NotesProvider>().notes;
 
     return Scaffold(
-      key: scaffoldKey,
+      key: _scaffoldKey,
       drawer: const AppDrawer(),
       body: DefaultTabController(
         length: 3,
@@ -43,7 +94,7 @@ class HomeScreen extends StatelessWidget {
                   IconButton(
                     icon: const Icon(Icons.menu),
                     onPressed: () {
-                      scaffoldKey.currentState?.openDrawer();
+                      _scaffoldKey.currentState?.openDrawer();
                     },
                   ),
                 ],
@@ -89,9 +140,107 @@ class HomeScreen extends StatelessWidget {
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {},
-        child: const Icon(Icons.add),
+      floatingActionButton: Stack(
+        alignment: Alignment.bottomRight,
+        children: [
+          // Quick Voice Note button
+          ScaleTransition(
+            scale: _animation,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 140),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surface,
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Text(
+                      l10n.quickVoiceNote,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w500,
+                          ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  FloatingActionButton(
+                    heroTag: 'quickVoiceNote',
+                    onPressed: _onQuickVoiceNote,
+                    backgroundColor: const Color(0xFF2196F3),
+                    child: const Icon(Icons.mic, color: Colors.white),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // New Note button
+          ScaleTransition(
+            scale: _animation,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 70),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surface,
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Text(
+                      l10n.newNote,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w500,
+                          ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  FloatingActionButton(
+                    heroTag: 'newNote',
+                    onPressed: _onNewNote,
+                    backgroundColor: const Color(0xFF2196F3),
+                    child: const Icon(Icons.edit, color: Colors.white),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // Main FAB
+          FloatingActionButton(
+            heroTag: 'mainFab',
+            onPressed: _toggleFab,
+            child: AnimatedRotation(
+              turns: _isFabExpanded ? 0.125 : 0.0,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOutCubic,
+              child: Icon(_isFabExpanded ? Icons.close : Icons.add),
+            ),
+          ),
+        ],
       ),
     );
   }

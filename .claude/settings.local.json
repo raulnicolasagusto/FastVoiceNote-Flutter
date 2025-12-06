@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(chcp 65001)"
+      "Bash(chcp 65001)",
+      "Bash(flutter gen-l10n:*)",
+      "Bash(flutter analyze:*)"
     ],
     "deny": [],
     "ask": []

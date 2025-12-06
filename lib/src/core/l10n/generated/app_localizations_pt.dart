@@ -48,6 +48,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get newNote => 'Nova Nota';
 
   @override
+  String get quickVoiceNote => 'Nota de Voz Rápida';
+
+  @override
   String get recording => 'Gravando...';
 
   @override
