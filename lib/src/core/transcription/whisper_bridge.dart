@@ -66,8 +66,8 @@ class WhisperBridge {
       print('Copying model to $modelPath');
       try {
         final byteData = await rootBundle.load(
-          'assets/models/ggml-base-q5_1.bin',
-        ); // User's specific file
+          'assets/models/ggml-tiny-q5_1.bin',
+        ); // Tiny model - faster, less accurate
         final buffer = byteData.buffer;
         await modelFile.writeAsBytes(
           buffer.asUint8List(byteData.offsetInBytes, byteData.lengthInBytes),
@@ -75,11 +75,11 @@ class WhisperBridge {
       } catch (e) {
         // Fallback or better error handling
         print(
-          'Error copying model: $e check if assets/models/ggml-base-q5_1.bin exists',
+          'Error copying model: $e check if assets/models/ggml-tiny-q5_1.bin exists',
         );
         // Try generic name if specific fails? No, fail hard to debug.
         throw Exception(
-          'Model file not found in assets. Did you put ggml-base-q5_1.bin in assets/models/?',
+          'Model file not found in assets. Did you put ggml-tiny-q5_1.bin in assets/models/?',
         );
       }
     }
