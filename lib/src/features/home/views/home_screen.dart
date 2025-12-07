@@ -8,6 +8,8 @@ import '../../../shared/widgets/app_drawer.dart';
 import '../../notes/providers/notes_provider.dart';
 import 'package:intl/intl.dart';
 import '../../notes/models/note.dart';
+import '../../transcription/services/audio_recorder_service.dart';
+import '../../transcription/widgets/recording_dialog.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -54,9 +56,94 @@ class _HomeScreenState extends State<HomeScreen>
     });
   }
 
-  void _onQuickVoiceNote() {
-    // TODO: Implementar funcionalidad de nota de voz rápida
+  Future<void> _onQuickVoiceNote() async {
+    // 1. Close FAB first
     _toggleFab();
+
+    // 2. Initialize service (loads native lib & model if first time)
+    final recorderService = AudioRecorderService();
+    try {
+      await recorderService.init();
+
+      // 3. Start recording immediately logic
+      final started = await recorderService.startRecording();
+      if (!started && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Microphone permission denied')),
+        );
+        return;
+      }
+
+      if (!mounted) return;
+
+      // 4. Show Dialog
+      // We keep the dialog open until Stop/Cancel
+      final resultText = await showDialog<String>(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) => RecordingDialog(
+          onCancel: () async {
+            await recorderService.cancel();
+            Navigator.of(dialogContext).pop(); // Return null
+          },
+          onStop: () async {
+            // Show processing state?
+            // For now, blocking wait in dialog action or here
+            // Let's assume dialog closes then we process or we wait here.
+
+            // BETTER UX: Keep dialog, show "Processing..." spinner inside dialog?
+            // To keep it simple as per plan: Stop -> Process -> Close -> Navigate.
+            // We can implement a loading state in the dialog if needed,
+            // but for now let's just do the logic.
+
+            // To update dialog UI, we need state there.
+            // Let's close dialog with a specific flag or handle logic inside?
+            // The simplest way to pass data back is Navigator.pop(result)
+
+            // We'll signal the dialog to show processing if we modify it,
+            // or just show a global loader.
+
+            // Implementation:
+            // 1. User clicks stop.
+            // 2. We trigger service.stopAndTranscribe().
+            // 3. Then pop with text.
+
+            // TODO: Add loading feedback in RecordingDialog.
+            // For now, we'll do the work and close.
+            final text = await recorderService.stopAndTranscribe();
+            Navigator.of(dialogContext).pop(text);
+          },
+        ),
+      );
+
+      // 5. Create Note if text exists
+      if (resultText != null && resultText.isNotEmpty && mounted) {
+        final l10n = AppLocalizations.of(context)!;
+        final now = DateTime.now();
+        final id = now.millisecondsSinceEpoch.toString();
+
+        final newNote = Note(
+          id: id,
+          title: '${l10n.newNote} (Voice) ${DateFormat.Hm().format(now)}',
+          content: resultText,
+          createdAt: now,
+          updatedAt: now,
+          color: 'FFFFFFFF',
+          hasVoice: true, // Mark as voice note source
+        );
+
+        context.read<NotesProvider>().addNote(newNote);
+        context.push('/note/$id');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
+    } finally {
+      recorderService.dispose();
+    }
   }
 
   void _onNewNote() {

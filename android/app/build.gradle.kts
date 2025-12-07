@@ -28,6 +28,19 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
+        externalNativeBuild {
+            cmake {
+                cppFlags("-O3")
+                abiFilters("arm64-v8a")
+            }
+        }
+    }
+
+    externalNativeBuild {
+        cmake {
+            path("src/main/cpp/CMakeLists.txt")
+        }
     }
 
     buildTypes {

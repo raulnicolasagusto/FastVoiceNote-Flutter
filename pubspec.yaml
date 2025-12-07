@@ -45,6 +45,9 @@ dependencies:
   sqlite3_flutter_libs: ^0.5.26
   path_provider: ^2.1.5
   path: ^1.9.1
+  ffi: ^2.1.0
+  record: ^6.1.2
+  permission_handler: ^11.1.0
 
 dev_dependencies:
   flutter_test:
@@ -91,4 +94,6 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   generate: true
+  assets:
+    - assets/models/
 
