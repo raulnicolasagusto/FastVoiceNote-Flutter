@@ -6,8 +6,10 @@ import '../../../core/l10n/generated/app_localizations.dart';
 import '../widgets/note_card.dart';
 import '../../../shared/widgets/app_drawer.dart';
 import '../../notes/providers/notes_provider.dart';
+import '../../notes/widgets/move_to_folder_modal.dart';
 import 'package:intl/intl.dart';
 import '../../notes/models/note.dart';
+import '../../notes/models/checklist_utils.dart';
 import '../../transcription/services/audio_recorder_service.dart';
 import '../../transcription/widgets/recording_dialog.dart';
 
@@ -19,11 +21,13 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   late AnimationController _animationController;
   late Animation<double> _animation;
+  late TabController _tabController;
   bool _isFabExpanded = false;
+  final Set<String> _selectedNotes = {};
 
   @override
   void initState() {
@@ -37,11 +41,13 @@ class _HomeScreenState extends State<HomeScreen>
       curve: Curves.easeOutBack,
       reverseCurve: Curves.easeInBack,
     );
+    _tabController = TabController(length: 3, vsync: this);
   }
 
   @override
   void dispose() {
     _animationController.dispose();
+    _tabController.dispose();
     super.dispose();
   }
 
@@ -54,6 +60,203 @@ class _HomeScreenState extends State<HomeScreen>
         _animationController.reverse();
       }
     });
+  }
+
+  bool get _isSelectionMode => _selectedNotes.isNotEmpty;
+
+  void _toggleSelection(String noteId) {
+    setState(() {
+      if (_selectedNotes.contains(noteId)) {
+        _selectedNotes.remove(noteId);
+      } else {
+        _selectedNotes.add(noteId);
+      }
+    });
+  }
+
+  void _clearSelection() {
+    setState(() {
+      _selectedNotes.clear();
+    });
+  }
+
+  List<Note> _getFilteredNotes(List<Note> allNotes, int tabIndex) {
+    switch (tabIndex) {
+      case 0:
+        // All notes
+        return allNotes;
+      case 1:
+        // Folder 1
+        return allNotes.where((note) => note.folderId == AppFolders.folder1).toList();
+      case 2:
+        // Folder 2
+        return allNotes.where((note) => note.folderId == AppFolders.folder2).toList();
+      default:
+        return allNotes;
+    }
+  }
+
+  Widget _buildNoteGrid(List<Note> notesToShow, BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(
+        top: 0.1,
+        left: 8,
+        right: 8,
+        bottom: 8,
+      ),
+      child: notesToShow.isEmpty
+          ? Center(
+              child: Text(
+                'No notes',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Colors.grey[600],
+                ),
+              ),
+            )
+          : MasonryGridView.count(
+              crossAxisCount: 2,
+              mainAxisSpacing: 8,
+              crossAxisSpacing: 8,
+              itemCount: notesToShow.length,
+              itemBuilder: (context, index) {
+                final note = notesToShow[index];
+                final preview = ChecklistUtils.getPreview(note.content);
+                final isSelected = _selectedNotes.contains(note.id);
+                return GestureDetector(
+                  onTap: () {
+                    if (_isSelectionMode) {
+                      _toggleSelection(note.id);
+                    } else {
+                      context.push('/note/${note.id}');
+                    }
+                  },
+                  onLongPress: () {
+                    _toggleSelection(note.id);
+                  },
+                  child: NoteCard(
+                    title: note.title,
+                    date: note.updatedAt,
+                    content: preview,
+                    color: Color(int.parse('0x${note.color}')),
+                    hasImage: note.hasImage,
+                    hasVoice: note.hasVoice,
+                    isSelected: isSelected,
+                  ),
+                );
+              },
+            ),
+    );
+  }
+
+  Future<void> _confirmDelete() async {
+    final l10n = AppLocalizations.of(context)!;
+    final count = _selectedNotes.length;
+    if (count == 0) return;
+
+    final isSingle = count == 1;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isSingle ? l10n.deleteSingleTitle : l10n.deleteMultipleTitle,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  isSingle
+                      ? l10n.deleteSingleMessage
+                      : l10n.deleteMultipleMessage(count.toString()),
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.of(context).pop(false),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          backgroundColor: Colors.grey[300],
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: Text(
+                          l10n.deleteCancel,
+                          style: const TextStyle(color: Colors.black87),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.of(context).pop(true),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          backgroundColor: const Color(0xFFE53935),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: Text(
+                          l10n.deleteConfirm,
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (confirmed == true) {
+      await context.read<NotesProvider>().deleteNotes(_selectedNotes.toList());
+      _clearSelection();
+    }
+  }
+
+  void _showMoveToFolderModal() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => MoveToFolderModal(
+        onFolderSelected: (folderId) async {
+          // Mover las notas
+          await context.read<NotesProvider>().moveNotes(
+            _selectedNotes.toList(),
+            folderId,
+          );
+          
+          // Limpiar la selección
+          _clearSelection();
+          
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  folderId == null 
+                    ? 'Moved to All Notes'
+                    : 'Moved to ${AppFolders.folders[folderId]}',
+                ),
+              ),
+            );
+          }
+        },
+      ),
+    );
   }
 
   Future<void> _onQuickVoiceNote() async {
@@ -174,22 +377,40 @@ class _HomeScreenState extends State<HomeScreen>
     return Scaffold(
       key: _scaffoldKey,
       drawer: const AppDrawer(),
-      body: DefaultTabController(
-        length: 3,
-        child: NestedScrollView(
-          headerSliverBuilder: (context, innerBoxIsScrolled) {
-            return [
-              SliverAppBar(
-                automaticallyImplyLeading: false,
-                title: Text(
-                  l10n.notesTitle,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                centerTitle: false,
-                floating: true,
-                snap: true,
-                pinned: true,
-                actions: [
+      body: NestedScrollView(
+        headerSliverBuilder: (context, innerBoxIsScrolled) {
+          return [
+            SliverAppBar(
+              automaticallyImplyLeading: false,
+              title: _isSelectionMode
+                  ? Text(
+                      '${_selectedNotes.length} ${l10n.deleteMultipleTitle}',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    )
+                  : Text(
+                      l10n.notesTitle,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+              centerTitle: false,
+              floating: true,
+              snap: true,
+              pinned: true,
+              actions: [
+                if (_isSelectionMode) ...[
+                  IconButton(
+                    icon: const Icon(Icons.arrow_forward),
+                    tooltip: 'Move',
+                    onPressed: _showMoveToFolderModal,
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: _clearSelection,
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete),
+                    onPressed: _confirmDelete,
+                  ),
+                ] else ...[
                   IconButton(
                     icon: const Icon(Icons.create_new_folder_outlined),
                     onPressed: () {},
@@ -202,51 +423,29 @@ class _HomeScreenState extends State<HomeScreen>
                     },
                   ),
                 ],
-                bottom: TabBar(
-                  isScrollable: true,
-                  tabs: [
-                    Tab(text: l10n.allTab),
-                    Tab(text: '${l10n.folderTab} 1'),
-                    Tab(text: '${l10n.folderTab} 2'),
-                  ],
-                ),
+              ],
+              bottom: TabBar(
+                controller: _tabController,
+                isScrollable: true,
+                tabs: [
+                  Tab(text: l10n.allTab),
+                  Tab(text: '${l10n.folderTab} 1'),
+                  Tab(text: '${l10n.folderTab} 2'),
+                ],
               ),
-            ];
-          },
-          body: TabBarView(
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(
-                  top: 0.1,
-                  left: 8,
-                  right: 8,
-                  bottom: 8,
-                ),
-                child: MasonryGridView.count(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 8,
-                  crossAxisSpacing: 8,
-                  itemCount: notes.length,
-                  itemBuilder: (context, index) {
-                    final note = notes[index];
-                    return GestureDetector(
-                      onTap: () => context.push('/note/${note.id}'),
-                      child: NoteCard(
-                        title: note.title,
-                        date: note.updatedAt,
-                        content: note.content,
-                        color: Color(int.parse('0x${note.color}')),
-                        hasImage: note.hasImage,
-                        hasVoice: note.hasVoice,
-                      ),
-                    );
-                  },
-                ),
-              ),
-              const Center(child: Text('Folder 1 Content')),
-              const Center(child: Text('Folder 2 Content')),
-            ],
-          ),
+            ),
+          ];
+        },
+        body: TabBarView(
+          controller: _tabController,
+          children: [
+            // Tab 0: All Notes
+            _buildNoteGrid(_getFilteredNotes(notes, 0), context),
+            // Tab 1: Folder 1
+            _buildNoteGrid(_getFilteredNotes(notes, 1), context),
+            // Tab 2: Folder 2
+            _buildNoteGrid(_getFilteredNotes(notes, 2), context),
+          ],
         ),
       ),
       floatingActionButton: Stack(

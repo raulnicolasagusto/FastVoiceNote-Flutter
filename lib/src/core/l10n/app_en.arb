@@ -15,5 +15,18 @@
   "quickVoiceNote": "Quick Voice Note",
   "recording": "Recording...",
   "cancel": "Cancel",
-  "save": "Save"
+  "save": "Save",
+  "moreOptions": "More Options",
+  "checklist": "Checklist",
+  "lock": "Lock",
+  "unlock": "Unlock",
+  "share": "Share",
+  "addToHomeScreen": "Add to Home Screen",
+  "addItem": "Add item",
+  "deleteConfirm": "Delete",
+  "deleteCancel": "Cancel",
+  "deleteSingleTitle": "Delete note",
+  "deleteSingleMessage": "Are you sure you want to delete this note?",
+  "deleteMultipleTitle": "Delete notes",
+  "deleteMultipleMessage": "Delete {count} selected notes?"
 }

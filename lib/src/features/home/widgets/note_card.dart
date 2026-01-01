@@ -8,6 +8,7 @@ class NoteCard extends StatelessWidget {
   final Color color;
   final bool hasImage;
   final bool hasVoice;
+  final bool isSelected;
 
   const NoteCard({
     super.key,
@@ -17,69 +18,98 @@ class NoteCard extends StatelessWidget {
     required this.color,
     this.hasImage = false,
     this.hasVoice = false,
+    this.isSelected = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      color: color,
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Stack(
+      children: [
+        Card(
+          color: color,
+          elevation: 2,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Text(
-                    title,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                    Icon(Icons.edit, size: 16, color: Colors.grey[600]),
+                  ],
                 ),
-                Icon(Icons.edit, size: 16, color: Colors.grey[600]),
+                const SizedBox(height: 4),
+                Text(
+                  DateFormat('dd/MM/yyyy').format(date),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  content,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: Colors.grey[800]),
+                  maxLines: 6,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (hasImage || hasVoice) ...[
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      if (hasImage)
+                        const Padding(
+                          padding: EdgeInsets.only(right: 8.0),
+                          child: Icon(Icons.image, size: 20, color: Colors.purple),
+                        ),
+                      if (hasVoice)
+                        const Icon(Icons.mic, size: 20, color: Colors.orange),
+                    ],
+                  ),
+                ],
               ],
             ),
-            const SizedBox(height: 4),
-            Text(
-              DateFormat('dd/MM/yyyy').format(date),
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              content,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: Colors.grey[800]),
-              maxLines: 6,
-              overflow: TextOverflow.ellipsis,
-            ),
-            if (hasImage || hasVoice) ...[
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  if (hasImage)
-                    const Padding(
-                      padding: EdgeInsets.only(right: 8.0),
-                      child: Icon(Icons.image, size: 20, color: Colors.purple),
-                    ),
-                  if (hasVoice)
-                    const Icon(Icons.mic, size: 20, color: Colors.orange),
+          ),
+        ),
+        if (isSelected)
+          Positioned(
+            top: 10,
+            left: 10,
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
                 ],
               ),
-            ],
-          ],
-        ),
-      ),
+              child: const Icon(
+                Icons.check_circle,
+                color: Color(0xFF2196F3),
+                size: 20,
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

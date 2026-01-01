@@ -17,6 +17,7 @@ class Notes extends Table {
   TextColumn get color => text()();
   BoolColumn get hasImage => boolean().withDefault(const Constant(false))();
   BoolColumn get hasVoice => boolean().withDefault(const Constant(false))();
+  TextColumn get folderId => text().nullable().withDefault(const Constant(null))();
 
   @override
   Set<Column> get primaryKey => {id};
@@ -27,10 +28,24 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+    onCreate: (Migrator m) async {
+      await m.createAll();
+    },
+    onUpgrade: (Migrator m, int from, int to) async {
+      if (from == 1) {
+        await m.addColumn(notes, notes.folderId);
+      }
+    },
+  );
 
   Future<void> insertNote(NoteEntity note) => into(notes).insert(note);
   Future<void> updateNoteData(NoteEntity note) => update(notes).replace(note);
+  Future<void> updateNoteFolderId(String id, String? folderId) =>
+      (update(notes)..where((t) => t.id.equals(id))).write(NotesCompanion(folderId: Value(folderId)));
   Future<void> deleteNote(String id) =>
       (delete(notes)..where((t) => t.id.equals(id))).go();
   Stream<List<NoteEntity>> watchAllNotes() => select(notes).watch();

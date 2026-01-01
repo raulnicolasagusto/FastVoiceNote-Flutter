@@ -15,5 +15,18 @@
   "quickVoiceNote": "Nota de Voz Rápida",
   "recording": "Grabando...",
   "cancel": "Cancelar",
-  "save": "Guardar"
+  "save": "Guardar",
+  "moreOptions": "Más Opciones",
+  "checklist": "Lista de Tareas",
+  "lock": "Bloquear",
+  "unlock": "Desbloquear",
+  "share": "Compartir",
+  "addToHomeScreen": "Agregar a Pantalla de Inicio",
+  "addItem": "Agregar elemento",
+  "deleteConfirm": "Eliminar",
+  "deleteCancel": "Cancelar",
+  "deleteSingleTitle": "Eliminar nota",
+  "deleteSingleMessage": "¿Seguro que deseas eliminar esta nota?",
+  "deleteMultipleTitle": "Eliminar notas",
+  "deleteMultipleMessage": "¿Eliminar {count} notas seleccionadas?"
 }

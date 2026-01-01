@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../providers/notes_provider.dart';
+import '../widgets/note_options_dialog.dart';
+import '../widgets/checklist_widget.dart';
+import '../models/checklist_item.dart';
+import '../models/checklist_utils.dart';
 
 class NoteDetailScreen extends StatefulWidget {
   final String noteId;
@@ -17,13 +21,19 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
   late TextEditingController _contentController;
   bool _isEditingTitle = false;
   bool _isEditingContent = false;
+  bool _isChecklistEditing = false;
 
   @override
   void initState() {
     super.initState();
     final note = context.read<NotesProvider>().getNoteById(widget.noteId);
     _titleController = TextEditingController(text: note?.title ?? '');
-    _contentController = TextEditingController(text: note?.content ?? '');
+    // Si hay checklist, obtener solo el texto original
+    final content = note?.content ?? '';
+    final textContent = ChecklistUtils.hasChecklist(content) 
+        ? ChecklistUtils.getText(content) 
+        : content;
+    _contentController = TextEditingController(text: textContent);
   }
 
   @override
@@ -33,9 +43,9 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
     super.dispose();
   }
 
-  void _saveTitle() {
+  Future<void> _saveTitle() async {
     if (_titleController.text.isNotEmpty) {
-      context.read<NotesProvider>().updateNote(
+      await context.read<NotesProvider>().updateNote(
         widget.noteId,
         title: _titleController.text,
       );
@@ -43,11 +53,28 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
     setState(() => _isEditingTitle = false);
   }
 
-  void _saveContent() {
-    context.read<NotesProvider>().updateNote(
-      widget.noteId,
-      content: _contentController.text,
-    );
+  Future<void> _saveContent() async {
+    final note = context.read<NotesProvider>().getNoteById(widget.noteId);
+    if (note == null) return;
+
+    final hasChecklist = ChecklistUtils.hasChecklist(note.content);
+    
+    if (hasChecklist) {
+      // Si hay checklist, actualizar solo el texto manteniendo el checklist
+      final items = ChecklistUtils.jsonToItems(note.content);
+      final newContent = ChecklistUtils.itemsToJson(items, _contentController.text);
+      await context.read<NotesProvider>().updateNote(
+        widget.noteId,
+        content: newContent,
+      );
+    } else {
+      // Si no hay checklist, actualizar el contenido normalmente
+      await context.read<NotesProvider>().updateNote(
+        widget.noteId,
+        content: _contentController.text,
+      );
+    }
+    
     setState(() => _isEditingContent = false);
   }
 
@@ -55,6 +82,84 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
     FocusScope.of(context).unfocus();
     if (_isEditingTitle) _saveTitle();
     if (_isEditingContent) _saveContent();
+  }
+
+  void _showOptionsDialog() {
+    final note = context.read<NotesProvider>().getNoteById(widget.noteId);
+    
+    showDialog(
+      context: context,
+      builder: (context) => NoteOptionsDialog(
+        onChecklist: () {
+          if (note != null) {
+            _convertToChecklist(note);
+          }
+        },
+        onLock: () {
+          // TODO: Implement lock/unlock functionality
+        },
+        onShare: () {
+          // TODO: Implement share functionality
+        },
+        onAddToHomeScreen: () {
+          // TODO: Implement add to home screen functionality
+        },
+        isLocked: false, // TODO: Get from note state
+      ),
+    );
+  }
+
+  Future<void> _convertToChecklist(note) async {
+    // Si ya hay checklist, reiniciar uno nuevo preservando el texto original
+    final baseText = ChecklistUtils.hasChecklist(note.content)
+        ? ChecklistUtils.getText(note.content)
+        : note.content;
+
+    final checklistContent = ChecklistUtils.addChecklistToContent(baseText);
+    await context.read<NotesProvider>().updateNote(
+      widget.noteId,
+      content: checklistContent,
+    );
+    setState(() {
+      _isChecklistEditing = true;
+      _contentController.text = ChecklistUtils.getText(checklistContent);
+    });
+  }
+
+  Future<void> _onChecklistItemsChanged(List<ChecklistItem> items) async {
+    final note = context.read<NotesProvider>().getNoteById(widget.noteId);
+    if (note == null) return;
+
+    // Si no hay items, remover el checklist y volver a texto normal
+    if (items.isEmpty) {
+      final textContent = ChecklistUtils.getText(note.content);
+      await context.read<NotesProvider>().updateNote(
+        widget.noteId,
+        content: textContent,
+      );
+      setState(() {
+        _contentController.text = textContent;
+        _isChecklistEditing = false;
+      });
+      return;
+    }
+
+    // Mantener el texto original y actualizar el checklist
+    final originalText = ChecklistUtils.getText(note.content);
+    final checklistContent = ChecklistUtils.itemsToJson(items, originalText);
+    await context.read<NotesProvider>().updateNote(
+      widget.noteId,
+      content: checklistContent,
+    );
+    setState(() {
+      _contentController.text = originalText;
+    });
+  }
+
+  void _toggleChecklistEdit() {
+    setState(() {
+      _isChecklistEditing = !_isChecklistEditing;
+    });
   }
 
   @override
@@ -66,6 +171,14 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
         appBar: AppBar(),
         body: const Center(child: Text('Note not found')),
       );
+    }
+
+    // Actualizar controladores si el contenido cambió externamente
+    final currentText = ChecklistUtils.hasChecklist(note.content)
+        ? ChecklistUtils.getText(note.content)
+        : note.content;
+    if (_contentController.text != currentText && !_isEditingContent) {
+      _contentController.text = currentText;
     }
 
     return Scaffold(
@@ -105,48 +218,77 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                     onPressed: () {},
                   ),
                   const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.check),
-                    onPressed: (_isEditingTitle || _isEditingContent)
-                        ? _onDoneEditing
-                        : null,
+                  Builder(
+                    builder: (context) {
+                      final note = context.watch<NotesProvider>().getNoteById(widget.noteId);
+                      final hasChecklist = note != null && ChecklistUtils.hasChecklist(note.content);
+                      
+                      return IconButton(
+                        icon: const Icon(Icons.check),
+                        onPressed: (_isEditingTitle || _isEditingContent || (hasChecklist && _isChecklistEditing))
+                            ? () {
+                                if (hasChecklist) {
+                                  _toggleChecklistEdit();
+                                } else {
+                                  _onDoneEditing();
+                                }
+                              }
+                            : hasChecklist
+                                ? _toggleChecklistEdit
+                                : null,
+                      );
+                    },
                   ),
                   IconButton(icon: const Icon(Icons.search), onPressed: () {}),
                   IconButton(
                     icon: const Icon(Icons.more_vert),
-                    onPressed: () {},
+                    onPressed: _showOptionsDialog,
                   ),
                 ],
               ),
             ),
 
             // Date and character count
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Row(
-                children: [
-                  Text(
-                    DateFormat('MMM d, yyyy').format(note.updatedAt),
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodySmall?.copyWith(color: Colors.grey),
+            Builder(
+              builder: (context) {
+                final hasChecklist = ChecklistUtils.hasChecklist(note.content);
+                final textContent = ChecklistUtils.getText(note.content);
+                int charCount = textContent.length;
+                if (hasChecklist) {
+                  final items = ChecklistUtils.jsonToItems(note.content);
+                  charCount += items.fold(0, (sum, item) => sum + item.text.length);
+                }
+                
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Row(
+                    children: [
+                      Text(
+                        DateFormat('MMM d, yyyy').format(note.updatedAt),
+                        style: Theme.of(
+                          context,
+                        ).textTheme.bodySmall?.copyWith(color: Colors.grey),
+                      ),
+                      const SizedBox(width: 16),
+                      Text(
+                        '$charCount chars',
+                        style: Theme.of(
+                          context,
+                        ).textTheme.bodySmall?.copyWith(color: Colors.grey),
+                      ),
+                      if (!hasChecklist) ...[
+                        const Spacer(),
+                        Text(
+                          'Toca para editar',
+                          style: Theme.of(
+                            context,
+                          ).textTheme.bodySmall?.copyWith(color: Colors.grey),
+                        ),
+                      ],
+                    ],
                   ),
-                  const SizedBox(width: 16),
-                  Text(
-                    '${note.content.length} chars',
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodySmall?.copyWith(color: Colors.grey),
-                  ),
-                  const Spacer(),
-                  Text(
-                    'Toca para editar',
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodySmall?.copyWith(color: Colors.grey),
-                  ),
-                ],
-              ),
+                );
+              },
             ),
 
             const SizedBox(height: 24),
@@ -183,32 +325,62 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
 
                     const SizedBox(height: 16),
 
-                    // Content
-                    GestureDetector(
-                      onTap: () => setState(() => _isEditingContent = true),
-                      child: _isEditingContent
-                          ? TextField(
-                              controller: _contentController,
-                              autofocus: true,
-                              maxLines: null,
-                              style: Theme.of(context).textTheme.bodyLarge,
-                              decoration: const InputDecoration(
-                                border: InputBorder.none,
-                                hintText: 'Note',
-                              ),
-                              onTapOutside: (_) => _saveContent(),
-                            )
-                          : Text(
-                              note.content.isEmpty
-                                  ? 'Toca para agregar contenido'
-                                  : note.content,
-                              style: Theme.of(context).textTheme.bodyLarge
-                                  ?.copyWith(
-                                    color: note.content.isEmpty
-                                        ? Colors.grey
-                                        : null,
-                                  ),
+                    // Content and/or Checklist
+                    Builder(
+                      builder: (context) {
+                        final hasChecklist = ChecklistUtils.hasChecklist(note.content);
+                        final textContent = ChecklistUtils.getText(note.content);
+                        final isEditingContent = _isEditingContent;
+                        
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Text content (siempre visible, puede estar vacío)
+                            GestureDetector(
+                              onTap: () {
+                                setState(() => _isEditingContent = true);
+                              },
+                              child: isEditingContent
+                                  ? TextField(
+                                      controller: _contentController,
+                                      autofocus: true,
+                                      maxLines: null,
+                                      style: Theme.of(context).textTheme.bodyLarge,
+                                      decoration: const InputDecoration(
+                                        border: InputBorder.none,
+                                        hintText: 'Note',
+                                      ),
+                                      onTapOutside: (_) => _saveContent(),
+                                      onSubmitted: (_) => _saveContent(),
+                                    )
+                                  : textContent.isNotEmpty || !hasChecklist
+                                      ? Text(
+                                          textContent.isEmpty
+                                              ? 'Toca para agregar contenido'
+                                              : textContent,
+                                          style: Theme.of(context).textTheme.bodyLarge
+                                              ?.copyWith(
+                                                color: textContent.isEmpty
+                                                    ? Colors.grey
+                                                    : null,
+                                              ),
+                                        )
+                                      : const SizedBox.shrink(),
                             ),
+                            
+                            // Checklist (si existe)
+                            if (hasChecklist) ...[
+                              if (textContent.isNotEmpty) const SizedBox(height: 24),
+                              ChecklistWidget(
+                                items: ChecklistUtils.jsonToItems(note.content),
+                                isEditing: _isChecklistEditing,
+                                onItemsChanged: _onChecklistItemsChanged,
+                                onEditModeRequested: _toggleChecklistEdit,
+                              ),
+                            ],
+                          ],
+                        );
+                      },
                     ),
 
                     const SizedBox(height: 100),

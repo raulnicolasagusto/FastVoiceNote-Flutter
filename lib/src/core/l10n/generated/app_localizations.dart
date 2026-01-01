@@ -201,6 +201,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Save'**
   String get save;
+
+  /// No description provided for @moreOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'More Options'**
+  String get moreOptions;
+
+  /// No description provided for @checklist.
+  ///
+  /// In en, this message translates to:
+  /// **'Checklist'**
+  String get checklist;
+
+  /// No description provided for @lock.
+  ///
+  /// In en, this message translates to:
+  /// **'Lock'**
+  String get lock;
+
+  /// No description provided for @unlock.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock'**
+  String get unlock;
+
+  /// No description provided for @share.
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get share;
+
+  /// No description provided for @addToHomeScreen.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to Home Screen'**
+  String get addToHomeScreen;
+
+  /// No description provided for @addItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Add item'**
+  String get addItem;
+
+  /// No description provided for @deleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get deleteConfirm;
+
+  /// No description provided for @deleteCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get deleteCancel;
+
+  /// No description provided for @deleteSingleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete note'**
+  String get deleteSingleTitle;
+
+  /// No description provided for @deleteSingleMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this note?'**
+  String get deleteSingleMessage;
+
+  /// No description provided for @deleteMultipleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete notes'**
+  String get deleteMultipleTitle;
+
+  /// No description provided for @deleteMultipleMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete {count} selected notes?'**
+  String deleteMultipleMessage(Object count);
 }
 
 class _AppLocalizationsDelegate

@@ -35,16 +35,20 @@ class NotesProvider extends ChangeNotifier {
     }
   }
 
-  void updateNote(String id, {String? title, String? content}) {
+  Future<void> updateNote(String id, {String? title, String? content, String? folderId, bool replaceFolderId = false}) async {
     final note = getNoteById(id);
     if (note != null) {
+      // Si replaceFolderId es true, cambiar folderId aunque sea null
+      final newFolderId = replaceFolderId ? folderId : (folderId ?? note.folderId);
+      
       final updatedNote = note.copyWith(
         title: title,
         content: content,
+        folderId: newFolderId,
         updatedAt: DateTime.now(),
       );
 
-      _database.updateNoteData(
+      await _database.updateNoteData(
         NoteEntity(
           id: updatedNote.id,
           title: updatedNote.title,
@@ -54,6 +58,7 @@ class NotesProvider extends ChangeNotifier {
           color: updatedNote.color,
           hasImage: updatedNote.hasImage,
           hasVoice: updatedNote.hasVoice,
+          folderId: updatedNote.folderId,
         ),
       );
     }
@@ -70,7 +75,24 @@ class NotesProvider extends ChangeNotifier {
         color: note.color,
         hasImage: note.hasImage,
         hasVoice: note.hasVoice,
+        folderId: note.folderId,
       ),
     );
+  }
+
+  Future<void> deleteNote(String id) async {
+    await _database.deleteNote(id);
+  }
+
+  Future<void> deleteNotes(List<String> ids) async {
+    for (final id in ids) {
+      await _database.deleteNote(id);
+    }
+  }
+
+  Future<void> moveNotes(List<String> noteIds, String? folderId) async {
+    for (final noteId in noteIds) {
+      await _database.updateNoteFolderId(noteId, folderId);
+    }
   }
 }

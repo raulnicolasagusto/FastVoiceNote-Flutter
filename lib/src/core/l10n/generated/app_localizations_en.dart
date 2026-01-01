@@ -58,4 +58,46 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get save => 'Save';
+
+  @override
+  String get moreOptions => 'More Options';
+
+  @override
+  String get checklist => 'Checklist';
+
+  @override
+  String get lock => 'Lock';
+
+  @override
+  String get unlock => 'Unlock';
+
+  @override
+  String get share => 'Share';
+
+  @override
+  String get addToHomeScreen => 'Add to Home Screen';
+
+  @override
+  String get addItem => 'Add item';
+
+  @override
+  String get deleteConfirm => 'Delete';
+
+  @override
+  String get deleteCancel => 'Cancel';
+
+  @override
+  String get deleteSingleTitle => 'Delete note';
+
+  @override
+  String get deleteSingleMessage =>
+      'Are you sure you want to delete this note?';
+
+  @override
+  String get deleteMultipleTitle => 'Delete notes';
+
+  @override
+  String deleteMultipleMessage(Object count) {
+    return 'Delete $count selected notes?';
+  }
 }

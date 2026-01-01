@@ -58,4 +58,46 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get save => 'Salvar';
+
+  @override
+  String get moreOptions => 'Mais Opções';
+
+  @override
+  String get checklist => 'Lista de Tarefas';
+
+  @override
+  String get lock => 'Bloquear';
+
+  @override
+  String get unlock => 'Desbloquear';
+
+  @override
+  String get share => 'Compartilhar';
+
+  @override
+  String get addToHomeScreen => 'Adicionar à Tela Inicial';
+
+  @override
+  String get addItem => 'Adicionar item';
+
+  @override
+  String get deleteConfirm => 'Excluir';
+
+  @override
+  String get deleteCancel => 'Cancelar';
+
+  @override
+  String get deleteSingleTitle => 'Excluir nota';
+
+  @override
+  String get deleteSingleMessage =>
+      'Tem certeza de que deseja excluir esta nota?';
+
+  @override
+  String get deleteMultipleTitle => 'Excluir notas';
+
+  @override
+  String deleteMultipleMessage(Object count) {
+    return 'Excluir $count notas selecionadas?';
+  }
 }

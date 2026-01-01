@@ -98,6 +98,18 @@ class $NotesTable extends Notes with TableInfo<$NotesTable, NoteEntity> {
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _folderIdMeta = const VerificationMeta(
+    'folderId',
+  );
+  @override
+  late final GeneratedColumn<String> folderId = GeneratedColumn<String>(
+    'folder_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(null),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -108,6 +120,7 @@ class $NotesTable extends Notes with TableInfo<$NotesTable, NoteEntity> {
     color,
     hasImage,
     hasVoice,
+    folderId,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -178,6 +191,12 @@ class $NotesTable extends Notes with TableInfo<$NotesTable, NoteEntity> {
         hasVoice.isAcceptableOrUnknown(data['has_voice']!, _hasVoiceMeta),
       );
     }
+    if (data.containsKey('folder_id')) {
+      context.handle(
+        _folderIdMeta,
+        folderId.isAcceptableOrUnknown(data['folder_id']!, _folderIdMeta),
+      );
+    }
     return context;
   }
 
@@ -219,6 +238,10 @@ class $NotesTable extends Notes with TableInfo<$NotesTable, NoteEntity> {
         DriftSqlType.bool,
         data['${effectivePrefix}has_voice'],
       )!,
+      folderId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}folder_id'],
+      ),
     );
   }
 
@@ -237,6 +260,7 @@ class NoteEntity extends DataClass implements Insertable<NoteEntity> {
   final String color;
   final bool hasImage;
   final bool hasVoice;
+  final String? folderId;
   const NoteEntity({
     required this.id,
     required this.title,
@@ -246,6 +270,7 @@ class NoteEntity extends DataClass implements Insertable<NoteEntity> {
     required this.color,
     required this.hasImage,
     required this.hasVoice,
+    this.folderId,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -258,6 +283,9 @@ class NoteEntity extends DataClass implements Insertable<NoteEntity> {
     map['color'] = Variable<String>(color);
     map['has_image'] = Variable<bool>(hasImage);
     map['has_voice'] = Variable<bool>(hasVoice);
+    if (!nullToAbsent || folderId != null) {
+      map['folder_id'] = Variable<String>(folderId);
+    }
     return map;
   }
 
@@ -271,6 +299,9 @@ class NoteEntity extends DataClass implements Insertable<NoteEntity> {
       color: Value(color),
       hasImage: Value(hasImage),
       hasVoice: Value(hasVoice),
+      folderId: folderId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(folderId),
     );
   }
 
@@ -288,6 +319,7 @@ class NoteEntity extends DataClass implements Insertable<NoteEntity> {
       color: serializer.fromJson<String>(json['color']),
       hasImage: serializer.fromJson<bool>(json['hasImage']),
       hasVoice: serializer.fromJson<bool>(json['hasVoice']),
+      folderId: serializer.fromJson<String?>(json['folderId']),
     );
   }
   @override
@@ -302,6 +334,7 @@ class NoteEntity extends DataClass implements Insertable<NoteEntity> {
       'color': serializer.toJson<String>(color),
       'hasImage': serializer.toJson<bool>(hasImage),
       'hasVoice': serializer.toJson<bool>(hasVoice),
+      'folderId': serializer.toJson<String?>(folderId),
     };
   }
 
@@ -314,6 +347,7 @@ class NoteEntity extends DataClass implements Insertable<NoteEntity> {
     String? color,
     bool? hasImage,
     bool? hasVoice,
+    Value<String?> folderId = const Value.absent(),
   }) => NoteEntity(
     id: id ?? this.id,
     title: title ?? this.title,
@@ -323,6 +357,7 @@ class NoteEntity extends DataClass implements Insertable<NoteEntity> {
     color: color ?? this.color,
     hasImage: hasImage ?? this.hasImage,
     hasVoice: hasVoice ?? this.hasVoice,
+    folderId: folderId.present ? folderId.value : this.folderId,
   );
   NoteEntity copyWithCompanion(NotesCompanion data) {
     return NoteEntity(
@@ -334,6 +369,7 @@ class NoteEntity extends DataClass implements Insertable<NoteEntity> {
       color: data.color.present ? data.color.value : this.color,
       hasImage: data.hasImage.present ? data.hasImage.value : this.hasImage,
       hasVoice: data.hasVoice.present ? data.hasVoice.value : this.hasVoice,
+      folderId: data.folderId.present ? data.folderId.value : this.folderId,
     );
   }
 
@@ -347,7 +383,8 @@ class NoteEntity extends DataClass implements Insertable<NoteEntity> {
           ..write('updatedAt: $updatedAt, ')
           ..write('color: $color, ')
           ..write('hasImage: $hasImage, ')
-          ..write('hasVoice: $hasVoice')
+          ..write('hasVoice: $hasVoice, ')
+          ..write('folderId: $folderId')
           ..write(')'))
         .toString();
   }
@@ -362,6 +399,7 @@ class NoteEntity extends DataClass implements Insertable<NoteEntity> {
     color,
     hasImage,
     hasVoice,
+    folderId,
   );
   @override
   bool operator ==(Object other) =>
@@ -374,7 +412,8 @@ class NoteEntity extends DataClass implements Insertable<NoteEntity> {
           other.updatedAt == this.updatedAt &&
           other.color == this.color &&
           other.hasImage == this.hasImage &&
-          other.hasVoice == this.hasVoice);
+          other.hasVoice == this.hasVoice &&
+          other.folderId == this.folderId);
 }
 
 class NotesCompanion extends UpdateCompanion<NoteEntity> {
@@ -386,6 +425,7 @@ class NotesCompanion extends UpdateCompanion<NoteEntity> {
   final Value<String> color;
   final Value<bool> hasImage;
   final Value<bool> hasVoice;
+  final Value<String?> folderId;
   final Value<int> rowid;
   const NotesCompanion({
     this.id = const Value.absent(),
@@ -396,6 +436,7 @@ class NotesCompanion extends UpdateCompanion<NoteEntity> {
     this.color = const Value.absent(),
     this.hasImage = const Value.absent(),
     this.hasVoice = const Value.absent(),
+    this.folderId = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   NotesCompanion.insert({
@@ -407,6 +448,7 @@ class NotesCompanion extends UpdateCompanion<NoteEntity> {
     required String color,
     this.hasImage = const Value.absent(),
     this.hasVoice = const Value.absent(),
+    this.folderId = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        title = Value(title),
@@ -423,6 +465,7 @@ class NotesCompanion extends UpdateCompanion<NoteEntity> {
     Expression<String>? color,
     Expression<bool>? hasImage,
     Expression<bool>? hasVoice,
+    Expression<String>? folderId,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -434,6 +477,7 @@ class NotesCompanion extends UpdateCompanion<NoteEntity> {
       if (color != null) 'color': color,
       if (hasImage != null) 'has_image': hasImage,
       if (hasVoice != null) 'has_voice': hasVoice,
+      if (folderId != null) 'folder_id': folderId,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -447,6 +491,7 @@ class NotesCompanion extends UpdateCompanion<NoteEntity> {
     Value<String>? color,
     Value<bool>? hasImage,
     Value<bool>? hasVoice,
+    Value<String?>? folderId,
     Value<int>? rowid,
   }) {
     return NotesCompanion(
@@ -458,6 +503,7 @@ class NotesCompanion extends UpdateCompanion<NoteEntity> {
       color: color ?? this.color,
       hasImage: hasImage ?? this.hasImage,
       hasVoice: hasVoice ?? this.hasVoice,
+      folderId: folderId ?? this.folderId,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -489,6 +535,9 @@ class NotesCompanion extends UpdateCompanion<NoteEntity> {
     if (hasVoice.present) {
       map['has_voice'] = Variable<bool>(hasVoice.value);
     }
+    if (folderId.present) {
+      map['folder_id'] = Variable<String>(folderId.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -506,6 +555,7 @@ class NotesCompanion extends UpdateCompanion<NoteEntity> {
           ..write('color: $color, ')
           ..write('hasImage: $hasImage, ')
           ..write('hasVoice: $hasVoice, ')
+          ..write('folderId: $folderId, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -533,6 +583,7 @@ typedef $$NotesTableCreateCompanionBuilder =
       required String color,
       Value<bool> hasImage,
       Value<bool> hasVoice,
+      Value<String?> folderId,
       Value<int> rowid,
     });
 typedef $$NotesTableUpdateCompanionBuilder =
@@ -545,6 +596,7 @@ typedef $$NotesTableUpdateCompanionBuilder =
       Value<String> color,
       Value<bool> hasImage,
       Value<bool> hasVoice,
+      Value<String?> folderId,
       Value<int> rowid,
     });
 
@@ -593,6 +645,11 @@ class $$NotesTableFilterComposer extends Composer<_$AppDatabase, $NotesTable> {
 
   ColumnFilters<bool> get hasVoice => $composableBuilder(
     column: $table.hasVoice,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get folderId => $composableBuilder(
+    column: $table.folderId,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -645,6 +702,11 @@ class $$NotesTableOrderingComposer
     column: $table.hasVoice,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get folderId => $composableBuilder(
+    column: $table.folderId,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$NotesTableAnnotationComposer
@@ -679,6 +741,9 @@ class $$NotesTableAnnotationComposer
 
   GeneratedColumn<bool> get hasVoice =>
       $composableBuilder(column: $table.hasVoice, builder: (column) => column);
+
+  GeneratedColumn<String> get folderId =>
+      $composableBuilder(column: $table.folderId, builder: (column) => column);
 }
 
 class $$NotesTableTableManager
@@ -717,6 +782,7 @@ class $$NotesTableTableManager
                 Value<String> color = const Value.absent(),
                 Value<bool> hasImage = const Value.absent(),
                 Value<bool> hasVoice = const Value.absent(),
+                Value<String?> folderId = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => NotesCompanion(
                 id: id,
@@ -727,6 +793,7 @@ class $$NotesTableTableManager
                 color: color,
                 hasImage: hasImage,
                 hasVoice: hasVoice,
+                folderId: folderId,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -739,6 +806,7 @@ class $$NotesTableTableManager
                 required String color,
                 Value<bool> hasImage = const Value.absent(),
                 Value<bool> hasVoice = const Value.absent(),
+                Value<String?> folderId = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => NotesCompanion.insert(
                 id: id,
@@ -749,6 +817,7 @@ class $$NotesTableTableManager
                 color: color,
                 hasImage: hasImage,
                 hasVoice: hasVoice,
+                folderId: folderId,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

@@ -58,4 +58,45 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get save => 'Guardar';
+
+  @override
+  String get moreOptions => 'Más Opciones';
+
+  @override
+  String get checklist => 'Lista de Tareas';
+
+  @override
+  String get lock => 'Bloquear';
+
+  @override
+  String get unlock => 'Desbloquear';
+
+  @override
+  String get share => 'Compartir';
+
+  @override
+  String get addToHomeScreen => 'Agregar a Pantalla de Inicio';
+
+  @override
+  String get addItem => 'Agregar elemento';
+
+  @override
+  String get deleteConfirm => 'Eliminar';
+
+  @override
+  String get deleteCancel => 'Cancelar';
+
+  @override
+  String get deleteSingleTitle => 'Eliminar nota';
+
+  @override
+  String get deleteSingleMessage => '¿Seguro que deseas eliminar esta nota?';
+
+  @override
+  String get deleteMultipleTitle => 'Eliminar notas';
+
+  @override
+  String deleteMultipleMessage(Object count) {
+    return '¿Eliminar $count notas seleccionadas?';
+  }
 }

@@ -7,6 +7,7 @@ class Note {
   final String color;
   final bool hasImage;
   final bool hasVoice;
+  String? folderId;
 
   Note({
     required this.id,
@@ -17,6 +18,7 @@ class Note {
     required this.color,
     this.hasImage = false,
     this.hasVoice = false,
+    this.folderId,
   });
 
   Note copyWith({
@@ -28,6 +30,7 @@ class Note {
     String? color,
     bool? hasImage,
     bool? hasVoice,
+    String? folderId,
   }) {
     return Note(
       id: id ?? this.id,
@@ -38,6 +41,7 @@ class Note {
       color: color ?? this.color,
       hasImage: hasImage ?? this.hasImage,
       hasVoice: hasVoice ?? this.hasVoice,
+      folderId: folderId ?? this.folderId,
     );
   }
 
@@ -51,6 +55,7 @@ class Note {
       color: entity.color,
       hasImage: entity.hasImage,
       hasVoice: entity.hasVoice,
+      folderId: entity.folderId,
     );
   }
 }
