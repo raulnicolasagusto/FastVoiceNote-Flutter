@@ -58,10 +58,11 @@ extern "C" {
     // Transcribe audio buffer
     // samples: PCM 16-bit converted to float (normalized -1.0 to 1.0)
     // n_samples: number of samples
+    // language: language code for transcription (e.g., "en", "es", "pt")
     // Returns: C-string with text (caller must NOT free, handled by static or internal) - *simplification*
     // Ideally, pass a buffer to fill or return a pointer that ownership is managed.
     // For this demo, we use a thread_local string to return.
-    EXPORT const char* native_transcribe(const float* samples, int n_samples) {
+    EXPORT const char* native_transcribe(const float* samples, int n_samples, const char* language) {
         std::lock_guard<std::mutex> lock(g_mutex);
 
         if (g_ctx == nullptr) {
@@ -69,7 +70,7 @@ extern "C" {
             return "ERROR: NOT_INIT";
         }
 
-        LOGI("Starting transcription of %d samples", n_samples);
+        LOGI("Starting transcription of %d samples with language: %s", n_samples, language);
 
         whisper_full_params wparams = whisper_full_default_params(WHISPER_SAMPLING_GREEDY);
         
@@ -79,8 +80,8 @@ extern "C" {
         wparams.print_realtime = false;
         wparams.print_timestamps = false;
         
-        // Basic config
-        wparams.language = "es"; // Force Spanish per user app context or auto
+        // Set language from parameter
+        wparams.language = language ? language : "en"; // Default to English if not specified
         wparams.translate = false;
         wparams.no_timestamps = true;
 

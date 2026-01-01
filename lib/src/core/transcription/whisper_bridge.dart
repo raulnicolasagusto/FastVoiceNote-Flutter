@@ -8,8 +8,9 @@ import 'package:path_provider/path_provider.dart';
 typedef InitWhisperFunc = Int32 Function(Pointer<Utf8>);
 typedef InitWhisper = int Function(Pointer<Utf8>);
 
-typedef TranscribeFunc = Pointer<Utf8> Function(Pointer<Float>, Int32);
-typedef Transcribe = Pointer<Utf8> Function(Pointer<Float>, int);
+// Updated typedef to include language parameter
+typedef TranscribeFunc = Pointer<Utf8> Function(Pointer<Float>, Int32, Pointer<Utf8>);
+typedef Transcribe = Pointer<Utf8> Function(Pointer<Float>, int, Pointer<Utf8>);
 
 typedef FreeWhisperFunc = Void Function();
 typedef FreeWhisper = void Function();
@@ -110,11 +111,16 @@ class WhisperBridge {
     String whisperLanguage = _mapToWhisperLanguage(language);
     print('Transcribing with language: $whisperLanguage');
 
-    final resultPtr = _transcribe(pointer, samples.length);
+    // Convert language string to UTF-8 pointer
+    final languagePtr = whisperLanguage.toNativeUtf8();
+
+    // Call native function with language parameter
+    final resultPtr = _transcribe(pointer, samples.length, languagePtr);
     final result = resultPtr.toDartString();
 
-    // We don't free resultPtr as it is static/thread_local in C++ simplification.
+    // Free allocated memory
     calloc.free(pointer);
+    calloc.free(languagePtr);
 
     return result;
   }
