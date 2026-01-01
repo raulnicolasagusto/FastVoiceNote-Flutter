@@ -93,7 +93,7 @@ class WhisperBridge {
     }
   }
 
-  Future<String> transcribe(List<double> samples) async {
+  Future<String> transcribe(List<double> samples, [String language = 'en']) async {
     if (!_isInitialized) {
       await init();
     }
@@ -105,15 +105,10 @@ class WhisperBridge {
       buffer[i] = samples[i];
     }
 
-    // Run in compute/isolate to avoid blocking UI?
-    // FFI calls are synchronous on the calling thread.
-    // Ideally this should be in an isolate or use FFI non-blocking if available (experimental).
-    // For now, simple await, but typically FFI blocks standard isolates.
-    // We will assume short audio bits or tolerant UI.
-    // To fix blocking content, we should use Isolate.run() in Dart 3.
-
-    // BUT: passing pointers between isolates is tricky without simple addresses.
-    // We'll wrap this call logic later in service if UI freezes.
+    // Convert language code to Whisper format
+    // es -> Spanish, pt -> Portuguese, en -> English
+    String whisperLanguage = _mapToWhisperLanguage(language);
+    print('Transcribing with language: $whisperLanguage');
 
     final resultPtr = _transcribe(pointer, samples.length);
     final result = resultPtr.toDartString();
@@ -122,6 +117,24 @@ class WhisperBridge {
     calloc.free(pointer);
 
     return result;
+  }
+
+  String _mapToWhisperLanguage(String language) {
+    // Map language codes to Whisper format
+    // Flutter locale codes are typically 'es', 'pt', 'en'
+    // Whisper accepts full language names like 'spanish', 'portuguese', 'english'
+    switch (language.toLowerCase()) {
+      case 'es':
+      case 'spanish':
+        return 'spanish';
+      case 'pt':
+      case 'portuguese':
+        return 'portuguese';
+      case 'en':
+      case 'english':
+      default:
+        return 'english';
+    }
   }
 
   void dispose() {

@@ -10,6 +10,12 @@ class AudioRecorderService {
   final AudioRecorder _audioRecorder = AudioRecorder();
   final WhisperBridge _whisperBridge = WhisperBridge();
   String? _currentPath;
+  String _language = 'en'; // Default to English
+
+  // Set language before recording
+  void setLanguage(String language) {
+    _language = language;
+  }
 
   Future<void> init() async {
     await _whisperBridge.init();
@@ -55,10 +61,8 @@ class AudioRecorderService {
       samples[i] = sample / 32768.0;
     }
 
-    // Pass to bridge
-    // Use Isolate.run for processing to avoid freezing UI in production
-    // For now direct call as per simplicity
-    final text = await _whisperBridge.transcribe(samples);
+    // Pass to bridge with language
+    final text = await _whisperBridge.transcribe(samples, _language);
 
     // Cleanup
     await file.delete();

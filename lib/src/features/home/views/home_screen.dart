@@ -266,6 +266,11 @@ class _HomeScreenState extends State<HomeScreen>
     // 2. Initialize service (loads native lib & model if first time)
     final recorderService = AudioRecorderService();
     try {
+      // Set language based on app's current locale
+      final locale = Localizations.localeOf(context);
+      final languageCode = locale.languageCode; // 'en', 'es', 'pt', etc.
+      recorderService.setLanguage(languageCode);
+      
       await recorderService.init();
 
       // 3. Start recording immediately logic
