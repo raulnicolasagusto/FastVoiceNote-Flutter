@@ -1,20 +1,37 @@
 import 'package:flutter/material.dart';
 
-// Definición de carpetas fijas
+// Definición de carpetas
 class AppFolders {
   static const String folder1 = 'folder1';
   static const String folder2 = 'folder2';
   static const String none = 'none'; // Sin carpeta asignada
 
-  static const Map<String, String> folders = {
+  // Default folders
+  static const Map<String, String> defaultFolders = {
     folder1: 'Folder 1',
     folder2: 'Folder 2',
-    none: 'All Notes', // Opción para volver a "todas las notas"
+    none: 'All Notes',
   };
 
+  // Carpetas dinámicas (creadas por el usuario)
+  static Map<String, String> customFolders = {};
+
+  // Obtener todas las carpetas (default + custom)
+  static Map<String, String> getAllFolders() {
+    final all = Map<String, String>.from(defaultFolders);
+    all.addAll(customFolders);
+    return all;
+  }
+
+  // Agregar una carpeta personalizada
+  static void addCustomFolder(String folderId, String folderName) {
+    customFolders[folderId] = folderName;
+  }
+
+  // Obtener nombre de carpeta
   static String getFolderName(String? folderId) {
     if (folderId == null || folderId == none) return 'All Notes';
-    return folders[folderId] ?? 'Unknown';
+    return getAllFolders()[folderId] ?? 'Unknown';
   }
 }
 
@@ -28,6 +45,8 @@ class MoveToFolderModal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final allFolders = AppFolders.getAllFolders();
+    
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
@@ -65,34 +84,34 @@ class MoveToFolderModal extends StatelessWidget {
           const Divider(height: 1),
           
           // Folders list
-          ListView(
+          ListView.builder(
             shrinkWrap: true,
-            children: [
-              ListTile(
+            itemCount: allFolders.length + 1, // +1 for "All Notes"
+            itemBuilder: (context, index) {
+              if (index == 0) {
+                return ListTile(
+                  leading: const Icon(Icons.folder_outlined),
+                  title: const Text('All Notes'),
+                  onTap: () {
+                    onFolderSelected(null);
+                    Navigator.of(context).pop();
+                  },
+                );
+              }
+              
+              final entries = allFolders.entries.toList();
+              final key = entries[index - 1].key;
+              final value = entries[index - 1].value;
+              
+              return ListTile(
                 leading: const Icon(Icons.folder_outlined),
-                title: const Text('All Notes'),
+                title: Text(value),
                 onTap: () {
-                  onFolderSelected(null);
+                  onFolderSelected(key);
                   Navigator.of(context).pop();
                 },
-              ),
-              ListTile(
-                leading: const Icon(Icons.folder_outlined),
-                title: const Text('Folder 1'),
-                onTap: () {
-                  onFolderSelected(AppFolders.folder1);
-                  Navigator.of(context).pop();
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.folder_outlined),
-                title: const Text('Folder 2'),
-                onTap: () {
-                  onFolderSelected(AppFolders.folder2);
-                  Navigator.of(context).pop();
-                },
-              ),
-            ],
+              );
+            },
           ),
         ],
       ),

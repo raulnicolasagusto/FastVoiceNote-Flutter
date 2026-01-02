@@ -7,6 +7,7 @@ import '../widgets/note_card.dart';
 import '../../../shared/widgets/app_drawer.dart';
 import '../../notes/providers/notes_provider.dart';
 import '../../notes/widgets/move_to_folder_modal.dart';
+import '../../notes/widgets/create_folder_modal.dart';
 import 'package:intl/intl.dart';
 import '../../notes/models/note.dart';
 import '../../notes/models/checklist_utils.dart';
@@ -41,7 +42,18 @@ class _HomeScreenState extends State<HomeScreen>
       curve: Curves.easeOutBack,
       reverseCurve: Curves.easeInBack,
     );
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 20, vsync: this); // Large enough
+  }
+
+  int _getTabCount() {
+    // 1 (All Notes) + number of folders
+    return 1 + AppFolders.getAllFolders().length;
+  }
+
+  List<String?> _getFolderIds() {
+    // Return list of folder IDs: null for "All Notes", then all folder IDs
+    final allFolders = AppFolders.getAllFolders();
+    return [null, ...allFolders.keys];
   }
 
   @override
@@ -80,20 +92,13 @@ class _HomeScreenState extends State<HomeScreen>
     });
   }
 
-  List<Note> _getFilteredNotes(List<Note> allNotes, int tabIndex) {
-    switch (tabIndex) {
-      case 0:
-        // All notes
-        return allNotes;
-      case 1:
-        // Folder 1
-        return allNotes.where((note) => note.folderId == AppFolders.folder1).toList();
-      case 2:
-        // Folder 2
-        return allNotes.where((note) => note.folderId == AppFolders.folder2).toList();
-      default:
-        return allNotes;
+  List<Note> _getFilteredNotes(List<Note> allNotes, String? folderId) {
+    if (folderId == null) {
+      // All notes
+      return allNotes;
     }
+    // Filter by folderId
+    return allNotes.where((note) => note.folderId == folderId).toList();
   }
 
   Widget _buildNoteGrid(List<Note> notesToShow, BuildContext context) {
@@ -146,6 +151,24 @@ class _HomeScreenState extends State<HomeScreen>
               },
             ),
     );
+  }
+
+  List<Tab> _buildTabs(AppLocalizations l10n) {
+    final folderIds = _getFolderIds();
+    return folderIds.map((folderId) {
+      if (folderId == null) {
+        return Tab(text: l10n.allTab);
+      }
+      final folderName = AppFolders.getFolderName(folderId);
+      return Tab(text: folderName);
+    }).toList();
+  }
+
+  List<Widget> _buildTabViews(List<Note> notes, BuildContext context) {
+    final folderIds = _getFolderIds();
+    return folderIds.map((folderId) {
+      return _buildNoteGrid(_getFilteredNotes(notes, folderId), context);
+    }).toList();
   }
 
   Future<void> _confirmDelete() async {
@@ -249,11 +272,35 @@ class _HomeScreenState extends State<HomeScreen>
                 content: Text(
                   folderId == null 
                     ? 'Moved to All Notes'
-                    : 'Moved to ${AppFolders.folders[folderId]}',
+                    : 'Moved to ${AppFolders.getFolderName(folderId)}',
                 ),
               ),
             );
           }
+        },
+      ),
+    );
+  }
+
+  void _showCreateFolderModal() {
+    showDialog(
+      context: context,
+      builder: (context) => CreateFolderModal(
+        onFolderCreated: (folderName) {
+          Navigator.of(context).pop();
+          
+          // Generate a unique folder ID
+          final folderId = 'folder_${DateTime.now().millisecondsSinceEpoch}';
+          
+          // Add folder to AppFolders
+          AppFolders.addCustomFolder(folderId, folderName);
+          
+          // Rebuild UI - TabController será recreado automáticamente en build()
+          setState(() {});
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Folder "$folderName" created')),
+          );
         },
       ),
     );
@@ -375,6 +422,7 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   @override
+  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final notes = context.watch<NotesProvider>().notes;
@@ -418,7 +466,7 @@ class _HomeScreenState extends State<HomeScreen>
                 ] else ...[
                   IconButton(
                     icon: const Icon(Icons.create_new_folder_outlined),
-                    onPressed: () {},
+                    onPressed: _showCreateFolderModal,
                   ),
                   IconButton(icon: const Icon(Icons.search), onPressed: () {}),
                   IconButton(
@@ -432,25 +480,19 @@ class _HomeScreenState extends State<HomeScreen>
               bottom: TabBar(
                 controller: _tabController,
                 isScrollable: true,
-                tabs: [
-                  Tab(text: l10n.allTab),
-                  Tab(text: '${l10n.folderTab} 1'),
-                  Tab(text: '${l10n.folderTab} 2'),
-                ],
+                tabAlignment: TabAlignment.start,
+                labelPadding: const EdgeInsets.symmetric(horizontal: 12),
+                labelStyle: const TextStyle(fontWeight: FontWeight.w600),
+                unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500),
+                indicatorSize: TabBarIndicatorSize.label,
+                tabs: _buildTabs(l10n),
               ),
             ),
           ];
         },
         body: TabBarView(
           controller: _tabController,
-          children: [
-            // Tab 0: All Notes
-            _buildNoteGrid(_getFilteredNotes(notes, 0), context),
-            // Tab 1: Folder 1
-            _buildNoteGrid(_getFilteredNotes(notes, 1), context),
-            // Tab 2: Folder 2
-            _buildNoteGrid(_getFilteredNotes(notes, 2), context),
-          ],
+          children: _buildTabViews(notes, context),
         ),
       ),
       floatingActionButton: Stack(
