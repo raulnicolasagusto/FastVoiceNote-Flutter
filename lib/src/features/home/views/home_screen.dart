@@ -106,12 +106,19 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   List<Note> _getFilteredNotes(List<Note> allNotes, String? folderId) {
-    if (folderId == null) {
-      // All notes
-      return allNotes;
-    }
-    // Filter by folderId
-    return allNotes.where((note) => note.folderId == folderId).toList();
+    List<Note> filtered = folderId == null
+        ? List.from(allNotes)
+        : allNotes.where((note) => note.folderId == folderId).toList();
+
+    // Sort: pinned first, then by updatedAt (newest first)
+    filtered.sort((a, b) {
+      if (a.isPinned != b.isPinned) {
+        return b.isPinned ? 1 : -1; // Pinned (true) first
+      }
+      return b.updatedAt.compareTo(a.updatedAt); // Newest first
+    });
+
+    return filtered;
   }
 
   Widget _buildNoteGrid(List<Note> notesToShow, BuildContext context) {
@@ -159,6 +166,7 @@ class _HomeScreenState extends State<HomeScreen>
                     hasImage: note.hasImage,
                     hasVoice: note.hasVoice,
                     isSelected: isSelected,
+                    isPinned: note.isPinned,
                   ),
                 );
               },

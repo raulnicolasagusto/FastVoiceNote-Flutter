@@ -35,7 +35,14 @@ class NotesProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> updateNote(String id, {String? title, String? content, String? folderId, bool replaceFolderId = false}) async {
+  Future<void> togglePin(String id) async {
+    final note = getNoteById(id);
+    if (note != null) {
+      await updateNote(id, isPinned: !note.isPinned);
+    }
+  }
+
+  Future<void> updateNote(String id, {String? title, String? content, String? folderId, bool replaceFolderId = false, bool? isPinned}) async {
     final note = getNoteById(id);
     if (note != null) {
       // Si replaceFolderId es true, cambiar folderId aunque sea null
@@ -45,6 +52,7 @@ class NotesProvider extends ChangeNotifier {
         title: title,
         content: content,
         folderId: newFolderId,
+        isPinned: isPinned,
         updatedAt: DateTime.now(),
       );
 
@@ -59,6 +67,7 @@ class NotesProvider extends ChangeNotifier {
           hasImage: updatedNote.hasImage,
           hasVoice: updatedNote.hasVoice,
           folderId: updatedNote.folderId,
+          isPinned: updatedNote.isPinned,
         ),
       );
     }
@@ -76,6 +85,7 @@ class NotesProvider extends ChangeNotifier {
         hasImage: note.hasImage,
         hasVoice: note.hasVoice,
         folderId: note.folderId,
+        isPinned: note.isPinned,
       ),
     );
   }

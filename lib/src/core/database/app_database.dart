@@ -18,6 +18,7 @@ class Notes extends Table {
   BoolColumn get hasImage => boolean().withDefault(const Constant(false))();
   BoolColumn get hasVoice => boolean().withDefault(const Constant(false))();
   TextColumn get folderId => text().nullable().withDefault(const Constant(null))();
+  BoolColumn get isPinned => boolean().withDefault(const Constant(false))();
 
   @override
   Set<Column> get primaryKey => {id};
@@ -28,7 +29,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -38,6 +39,9 @@ class AppDatabase extends _$AppDatabase {
     onUpgrade: (Migrator m, int from, int to) async {
       if (from == 1) {
         await m.addColumn(notes, notes.folderId);
+      }
+      if (from == 2) {
+        await m.addColumn(notes, notes.isPinned as GeneratedColumn);
       }
     },
   );

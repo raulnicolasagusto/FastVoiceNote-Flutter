@@ -110,6 +110,21 @@ class $NotesTable extends Notes with TableInfo<$NotesTable, NoteEntity> {
     requiredDuringInsert: false,
     defaultValue: const Constant(null),
   );
+  static const VerificationMeta _isPinnedMeta = const VerificationMeta(
+    'isPinned',
+  );
+  @override
+  late final GeneratedColumn<bool> isPinned = GeneratedColumn<bool>(
+    'is_pinned',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_pinned" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -121,6 +136,7 @@ class $NotesTable extends Notes with TableInfo<$NotesTable, NoteEntity> {
     hasImage,
     hasVoice,
     folderId,
+    isPinned,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -197,6 +213,12 @@ class $NotesTable extends Notes with TableInfo<$NotesTable, NoteEntity> {
         folderId.isAcceptableOrUnknown(data['folder_id']!, _folderIdMeta),
       );
     }
+    if (data.containsKey('is_pinned')) {
+      context.handle(
+        _isPinnedMeta,
+        isPinned.isAcceptableOrUnknown(data['is_pinned']!, _isPinnedMeta),
+      );
+    }
     return context;
   }
 
@@ -242,6 +264,10 @@ class $NotesTable extends Notes with TableInfo<$NotesTable, NoteEntity> {
         DriftSqlType.string,
         data['${effectivePrefix}folder_id'],
       ),
+      isPinned: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_pinned'],
+      )!,
     );
   }
 
@@ -261,6 +287,7 @@ class NoteEntity extends DataClass implements Insertable<NoteEntity> {
   final bool hasImage;
   final bool hasVoice;
   final String? folderId;
+  final bool isPinned;
   const NoteEntity({
     required this.id,
     required this.title,
@@ -271,6 +298,7 @@ class NoteEntity extends DataClass implements Insertable<NoteEntity> {
     required this.hasImage,
     required this.hasVoice,
     this.folderId,
+    required this.isPinned,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -286,6 +314,7 @@ class NoteEntity extends DataClass implements Insertable<NoteEntity> {
     if (!nullToAbsent || folderId != null) {
       map['folder_id'] = Variable<String>(folderId);
     }
+    map['is_pinned'] = Variable<bool>(isPinned);
     return map;
   }
 
@@ -302,6 +331,7 @@ class NoteEntity extends DataClass implements Insertable<NoteEntity> {
       folderId: folderId == null && nullToAbsent
           ? const Value.absent()
           : Value(folderId),
+      isPinned: Value(isPinned),
     );
   }
 
@@ -320,6 +350,7 @@ class NoteEntity extends DataClass implements Insertable<NoteEntity> {
       hasImage: serializer.fromJson<bool>(json['hasImage']),
       hasVoice: serializer.fromJson<bool>(json['hasVoice']),
       folderId: serializer.fromJson<String?>(json['folderId']),
+      isPinned: serializer.fromJson<bool>(json['isPinned']),
     );
   }
   @override
@@ -335,6 +366,7 @@ class NoteEntity extends DataClass implements Insertable<NoteEntity> {
       'hasImage': serializer.toJson<bool>(hasImage),
       'hasVoice': serializer.toJson<bool>(hasVoice),
       'folderId': serializer.toJson<String?>(folderId),
+      'isPinned': serializer.toJson<bool>(isPinned),
     };
   }
 
@@ -348,6 +380,7 @@ class NoteEntity extends DataClass implements Insertable<NoteEntity> {
     bool? hasImage,
     bool? hasVoice,
     Value<String?> folderId = const Value.absent(),
+    bool? isPinned,
   }) => NoteEntity(
     id: id ?? this.id,
     title: title ?? this.title,
@@ -358,6 +391,7 @@ class NoteEntity extends DataClass implements Insertable<NoteEntity> {
     hasImage: hasImage ?? this.hasImage,
     hasVoice: hasVoice ?? this.hasVoice,
     folderId: folderId.present ? folderId.value : this.folderId,
+    isPinned: isPinned ?? this.isPinned,
   );
   NoteEntity copyWithCompanion(NotesCompanion data) {
     return NoteEntity(
@@ -370,6 +404,7 @@ class NoteEntity extends DataClass implements Insertable<NoteEntity> {
       hasImage: data.hasImage.present ? data.hasImage.value : this.hasImage,
       hasVoice: data.hasVoice.present ? data.hasVoice.value : this.hasVoice,
       folderId: data.folderId.present ? data.folderId.value : this.folderId,
+      isPinned: data.isPinned.present ? data.isPinned.value : this.isPinned,
     );
   }
 
@@ -384,7 +419,8 @@ class NoteEntity extends DataClass implements Insertable<NoteEntity> {
           ..write('color: $color, ')
           ..write('hasImage: $hasImage, ')
           ..write('hasVoice: $hasVoice, ')
-          ..write('folderId: $folderId')
+          ..write('folderId: $folderId, ')
+          ..write('isPinned: $isPinned')
           ..write(')'))
         .toString();
   }
@@ -400,6 +436,7 @@ class NoteEntity extends DataClass implements Insertable<NoteEntity> {
     hasImage,
     hasVoice,
     folderId,
+    isPinned,
   );
   @override
   bool operator ==(Object other) =>
@@ -413,7 +450,8 @@ class NoteEntity extends DataClass implements Insertable<NoteEntity> {
           other.color == this.color &&
           other.hasImage == this.hasImage &&
           other.hasVoice == this.hasVoice &&
-          other.folderId == this.folderId);
+          other.folderId == this.folderId &&
+          other.isPinned == this.isPinned);
 }
 
 class NotesCompanion extends UpdateCompanion<NoteEntity> {
@@ -426,6 +464,7 @@ class NotesCompanion extends UpdateCompanion<NoteEntity> {
   final Value<bool> hasImage;
   final Value<bool> hasVoice;
   final Value<String?> folderId;
+  final Value<bool> isPinned;
   final Value<int> rowid;
   const NotesCompanion({
     this.id = const Value.absent(),
@@ -437,6 +476,7 @@ class NotesCompanion extends UpdateCompanion<NoteEntity> {
     this.hasImage = const Value.absent(),
     this.hasVoice = const Value.absent(),
     this.folderId = const Value.absent(),
+    this.isPinned = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   NotesCompanion.insert({
@@ -449,6 +489,7 @@ class NotesCompanion extends UpdateCompanion<NoteEntity> {
     this.hasImage = const Value.absent(),
     this.hasVoice = const Value.absent(),
     this.folderId = const Value.absent(),
+    this.isPinned = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        title = Value(title),
@@ -466,6 +507,7 @@ class NotesCompanion extends UpdateCompanion<NoteEntity> {
     Expression<bool>? hasImage,
     Expression<bool>? hasVoice,
     Expression<String>? folderId,
+    Expression<bool>? isPinned,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -478,6 +520,7 @@ class NotesCompanion extends UpdateCompanion<NoteEntity> {
       if (hasImage != null) 'has_image': hasImage,
       if (hasVoice != null) 'has_voice': hasVoice,
       if (folderId != null) 'folder_id': folderId,
+      if (isPinned != null) 'is_pinned': isPinned,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -492,6 +535,7 @@ class NotesCompanion extends UpdateCompanion<NoteEntity> {
     Value<bool>? hasImage,
     Value<bool>? hasVoice,
     Value<String?>? folderId,
+    Value<bool>? isPinned,
     Value<int>? rowid,
   }) {
     return NotesCompanion(
@@ -504,6 +548,7 @@ class NotesCompanion extends UpdateCompanion<NoteEntity> {
       hasImage: hasImage ?? this.hasImage,
       hasVoice: hasVoice ?? this.hasVoice,
       folderId: folderId ?? this.folderId,
+      isPinned: isPinned ?? this.isPinned,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -538,6 +583,9 @@ class NotesCompanion extends UpdateCompanion<NoteEntity> {
     if (folderId.present) {
       map['folder_id'] = Variable<String>(folderId.value);
     }
+    if (isPinned.present) {
+      map['is_pinned'] = Variable<bool>(isPinned.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -556,6 +604,7 @@ class NotesCompanion extends UpdateCompanion<NoteEntity> {
           ..write('hasImage: $hasImage, ')
           ..write('hasVoice: $hasVoice, ')
           ..write('folderId: $folderId, ')
+          ..write('isPinned: $isPinned, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -584,6 +633,7 @@ typedef $$NotesTableCreateCompanionBuilder =
       Value<bool> hasImage,
       Value<bool> hasVoice,
       Value<String?> folderId,
+      Value<bool> isPinned,
       Value<int> rowid,
     });
 typedef $$NotesTableUpdateCompanionBuilder =
@@ -597,6 +647,7 @@ typedef $$NotesTableUpdateCompanionBuilder =
       Value<bool> hasImage,
       Value<bool> hasVoice,
       Value<String?> folderId,
+      Value<bool> isPinned,
       Value<int> rowid,
     });
 
@@ -650,6 +701,11 @@ class $$NotesTableFilterComposer extends Composer<_$AppDatabase, $NotesTable> {
 
   ColumnFilters<String> get folderId => $composableBuilder(
     column: $table.folderId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isPinned => $composableBuilder(
+    column: $table.isPinned,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -707,6 +763,11 @@ class $$NotesTableOrderingComposer
     column: $table.folderId,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<bool> get isPinned => $composableBuilder(
+    column: $table.isPinned,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$NotesTableAnnotationComposer
@@ -744,6 +805,9 @@ class $$NotesTableAnnotationComposer
 
   GeneratedColumn<String> get folderId =>
       $composableBuilder(column: $table.folderId, builder: (column) => column);
+
+  GeneratedColumn<bool> get isPinned =>
+      $composableBuilder(column: $table.isPinned, builder: (column) => column);
 }
 
 class $$NotesTableTableManager
@@ -783,6 +847,7 @@ class $$NotesTableTableManager
                 Value<bool> hasImage = const Value.absent(),
                 Value<bool> hasVoice = const Value.absent(),
                 Value<String?> folderId = const Value.absent(),
+                Value<bool> isPinned = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => NotesCompanion(
                 id: id,
@@ -794,6 +859,7 @@ class $$NotesTableTableManager
                 hasImage: hasImage,
                 hasVoice: hasVoice,
                 folderId: folderId,
+                isPinned: isPinned,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -807,6 +873,7 @@ class $$NotesTableTableManager
                 Value<bool> hasImage = const Value.absent(),
                 Value<bool> hasVoice = const Value.absent(),
                 Value<String?> folderId = const Value.absent(),
+                Value<bool> isPinned = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => NotesCompanion.insert(
                 id: id,
@@ -818,6 +885,7 @@ class $$NotesTableTableManager
                 hasImage: hasImage,
                 hasVoice: hasVoice,
                 folderId: folderId,
+                isPinned: isPinned,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

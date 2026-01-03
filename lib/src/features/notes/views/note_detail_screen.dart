@@ -200,10 +200,12 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                   ),
                   IconButton(
                     icon: Icon(
-                      Icons.star_border,
-                      color: Theme.of(context).iconTheme.color,
+                      note.isPinned ? Icons.star : Icons.star_border,
+                      color: note.isPinned ? Colors.amber : Theme.of(context).iconTheme.color,
                     ),
-                    onPressed: () {},
+                    onPressed: () {
+                      context.read<NotesProvider>().togglePin(widget.noteId);
+                    },
                   ),
                   IconButton(
                     icon: const Icon(Icons.camera_alt_outlined),

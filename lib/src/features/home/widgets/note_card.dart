@@ -9,6 +9,7 @@ class NoteCard extends StatelessWidget {
   final bool hasImage;
   final bool hasVoice;
   final bool isSelected;
+  final bool isPinned;
 
   const NoteCard({
     super.key,
@@ -19,6 +20,7 @@ class NoteCard extends StatelessWidget {
     this.hasImage = false,
     this.hasVoice = false,
     this.isSelected = false,
+    this.isPinned = false,
   });
 
   @override
@@ -85,6 +87,16 @@ class NoteCard extends StatelessWidget {
             ),
           ),
         ),
+        if (isPinned)
+          Positioned(
+            top: 10,
+            left: 10,
+            child: Icon(
+              Icons.star,
+              color: Colors.amber,
+              size: 20,
+            ),
+          ),
         if (isSelected)
           Positioned(
             top: 10,
