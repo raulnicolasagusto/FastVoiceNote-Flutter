@@ -5,6 +5,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:record/record.dart';
 import '../../../core/transcription/whisper_bridge.dart';
+import '../utils/voice_to_checklist_processor.dart';
 
 class AudioRecorderService {
   final AudioRecorder _audioRecorder = AudioRecorder();
@@ -40,7 +41,7 @@ class AudioRecorderService {
     return false;
   }
 
-  Future<String?> stopAndTranscribe() async {
+  Future<ProcessedTranscription?> stopAndTranscribe() async {
     final path = await _audioRecorder.stop();
     if (path == null) return null;
 
@@ -66,7 +67,12 @@ class AudioRecorderService {
 
     // Cleanup
     await file.delete();
-    return text.isEmpty ? null : text;
+    
+    if (text.isEmpty) return null;
+    
+    // Process transcription for automatic checklist detection
+    final processed = VoiceToChecklistProcessor.processTranscription(text, _language);
+    return processed;
   }
 
   Future<void> cancel() async {

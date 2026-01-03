@@ -13,6 +13,7 @@ import '../../notes/models/note.dart';
 import '../../notes/models/checklist_utils.dart';
 import '../../transcription/services/audio_recorder_service.dart';
 import '../../transcription/widgets/recording_dialog.dart';
+import '../../transcription/utils/voice_to_checklist_processor.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -333,7 +334,7 @@ class _HomeScreenState extends State<HomeScreen>
 
       // 4. Show Dialog
       // We keep the dialog open until Stop/Cancel
-      final resultText = await showDialog<String>(
+      final processed = await showDialog<ProcessedTranscription>(
         context: context,
         barrierDismissible: false,
         builder: (dialogContext) => RecordingDialog(
@@ -342,45 +343,32 @@ class _HomeScreenState extends State<HomeScreen>
             Navigator.of(dialogContext).pop(); // Return null
           },
           onStop: () async {
-            // Show processing state?
-            // For now, blocking wait in dialog action or here
-            // Let's assume dialog closes then we process or we wait here.
-
-            // BETTER UX: Keep dialog, show "Processing..." spinner inside dialog?
-            // To keep it simple as per plan: Stop -> Process -> Close -> Navigate.
-            // We can implement a loading state in the dialog if needed,
-            // but for now let's just do the logic.
-
-            // To update dialog UI, we need state there.
-            // Let's close dialog with a specific flag or handle logic inside?
-            // The simplest way to pass data back is Navigator.pop(result)
-
-            // We'll signal the dialog to show processing if we modify it,
-            // or just show a global loader.
-
-            // Implementation:
-            // 1. User clicks stop.
-            // 2. We trigger service.stopAndTranscribe().
-            // 3. Then pop with text.
-
             // TODO: Add loading feedback in RecordingDialog.
             // For now, we'll do the work and close.
-            final text = await recorderService.stopAndTranscribe();
-            Navigator.of(dialogContext).pop(text);
+            final result = await recorderService.stopAndTranscribe();
+            Navigator.of(dialogContext).pop(result);
           },
         ),
       );
 
-      // 5. Create Note if text exists
-      if (resultText != null && resultText.isNotEmpty && mounted) {
+      // 5. Create Note if processed content exists
+      if (processed != null && mounted) {
         final l10n = AppLocalizations.of(context)!;
         final now = DateTime.now();
         final id = now.millisecondsSinceEpoch.toString();
+        
+        // Generate note content based on whether it's a checklist or regular text
+        final noteContent = VoiceToChecklistProcessor.generateNoteContent(processed);
+        
+        // Create appropriate title based on content type
+        final noteTitle = processed.isChecklist 
+            ? '${l10n.checklist} ${DateFormat.Hm().format(now)}'
+            : '${l10n.newNote} (Voice) ${DateFormat.Hm().format(now)}';
 
         final newNote = Note(
           id: id,
-          title: '${l10n.newNote} (Voice) ${DateFormat.Hm().format(now)}',
-          content: resultText,
+          title: noteTitle,
+          content: noteContent,
           createdAt: now,
           updatedAt: now,
           color: 'FFFFFFFF',
