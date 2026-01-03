@@ -44,6 +44,18 @@ class _HomeScreenState extends State<HomeScreen>
       reverseCurve: Curves.easeInBack,
     );
     _tabController = TabController(length: 20, vsync: this); // Large enough
+    _loadFolders();
+  }
+
+  Future<void> _loadFolders() async {
+    await AppFolders.loadCustomFolders();
+    if (mounted) {
+      final newLength = 1 + AppFolders.getAllFolders().length;
+      final oldController = _tabController;
+      _tabController = TabController(length: newLength, vsync: this);
+      oldController.dispose();
+      setState(() {});
+    }
   }
 
   int _getTabCount() {
@@ -161,6 +173,18 @@ class _HomeScreenState extends State<HomeScreen>
         return Tab(text: l10n.allTab);
       }
       final folderName = AppFolders.getFolderName(folderId);
+      final isCustomFolder = !AppFolders.isDefaultFolder(folderId);
+      
+      // Si es carpeta personalizada, permitir long press para editar/eliminar
+      if (isCustomFolder) {
+        return Tab(
+          child: GestureDetector(
+            onLongPress: () => _showEditFolderDialog(folderId, folderName),
+            child: Text(folderName),
+          ),
+        );
+      }
+      
       return Tab(text: folderName);
     }).toList();
   }
@@ -287,22 +311,132 @@ class _HomeScreenState extends State<HomeScreen>
     showDialog(
       context: context,
       builder: (context) => CreateFolderModal(
-        onFolderCreated: (folderName) {
+        onFolderCreated: (folderName) async {
           Navigator.of(context).pop();
           
           // Generate a unique folder ID
           final folderId = 'folder_${DateTime.now().millisecondsSinceEpoch}';
           
           // Add folder to AppFolders
-          AppFolders.addCustomFolder(folderId, folderName);
+          await AppFolders.addCustomFolder(folderId, folderName);
           
-          // Rebuild UI - TabController será recreado automáticamente en build()
+          // Recreate TabController with new count
+          final oldController = _tabController;
+          final newLength = 1 + AppFolders.getAllFolders().length;
+          _tabController = TabController(length: newLength, vsync: this);
+          oldController.dispose();
+          
+          // Rebuild UI
           setState(() {});
           
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Folder "$folderName" created')),
           );
         },
+      ),
+    );
+  }
+
+  void _showEditFolderDialog(String folderId, String currentName) {
+    final TextEditingController controller = TextEditingController(text: currentName);
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Folder'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            labelText: 'Folder Name',
+            border: OutlineInputBorder(),
+          ),
+          maxLength: 30,
+        ),
+        actions: [
+          // Delete button
+          IconButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _confirmDeleteFolder(folderId, currentName);
+            },
+            icon: Icon(
+              Icons.delete_outline,
+              color: Theme.of(context).colorScheme.error,
+            ),
+          ),
+          const Spacer(),
+          // Cancel button
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          // Save button
+          FilledButton(
+            onPressed: () async {
+              final newName = controller.text.trim();
+              if (newName.isNotEmpty && newName != currentName) {
+                await AppFolders.renameFolder(folderId, newName);
+                setState(() {});
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Renamed to "$newName"')),
+                );
+              }
+              Navigator.of(context).pop();
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmDeleteFolder(String folderId, String folderName) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Folder'),
+        content: Text('Delete "$folderName"? Notes will move to All.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              // Move notes from this folder to null (All)
+              final notesProvider = context.read<NotesProvider>();
+              final notesToMove = notesProvider.notes
+                  .where((note) => note.folderId == folderId)
+                  .map((note) => note.id)
+                  .toList();
+              
+              if (notesToMove.isNotEmpty) {
+                await notesProvider.moveNotes(notesToMove, null);
+              }
+              
+              // Delete folder
+              await AppFolders.deleteFolder(folderId);
+              
+              // Recreate TabController with new count
+              final oldController = _tabController;
+              final newLength = 1 + AppFolders.getAllFolders().length;
+              _tabController = TabController(length: newLength, vsync: this);
+              oldController.dispose();
+              
+              // Rebuild UI
+              setState(() {});
+              
+              Navigator.of(context).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Deleted "$folderName"')),
+              );
+            },
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
       ),
     );
   }

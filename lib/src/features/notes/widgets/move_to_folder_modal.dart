@@ -1,20 +1,47 @@
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
+import 'dart:convert';
 
 // Definición de carpetas
 class AppFolders {
   static const String folder1 = 'folder1';
-  static const String folder2 = 'folder2';
   static const String none = 'none'; // Sin carpeta asignada
 
   // Default folders
   static const Map<String, String> defaultFolders = {
     folder1: 'Folder 1',
-    folder2: 'Folder 2',
-    none: 'All Notes',
   };
 
   // Carpetas dinámicas (creadas por el usuario)
   static Map<String, String> customFolders = {};
+
+  // Cargar carpetas desde archivo
+  static Future<void> loadCustomFolders() async {
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final file = File('${directory.path}/custom_folders.json');
+      if (await file.exists()) {
+        final jsonString = await file.readAsString();
+        final Map<String, dynamic> decoded = json.decode(jsonString);
+        customFolders = decoded.cast<String, String>();
+      }
+    } catch (e) {
+      // Si falla, continuar con carpetas vacías
+    }
+  }
+
+  // Guardar carpetas en archivo
+  static Future<void> _saveCustomFolders() async {
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final file = File('${directory.path}/custom_folders.json');
+      final jsonString = json.encode(customFolders);
+      await file.writeAsString(jsonString);
+    } catch (e) {
+      // Si falla, continuar sin guardar
+    }
+  }
 
   // Obtener todas las carpetas (default + custom)
   static Map<String, String> getAllFolders() {
@@ -24,8 +51,28 @@ class AppFolders {
   }
 
   // Agregar una carpeta personalizada
-  static void addCustomFolder(String folderId, String folderName) {
+  static Future<void> addCustomFolder(String folderId, String folderName) async {
     customFolders[folderId] = folderName;
+    await _saveCustomFolders();
+  }
+
+  // Renombrar una carpeta personalizada
+  static Future<void> renameFolder(String folderId, String newName) async {
+    if (customFolders.containsKey(folderId)) {
+      customFolders[folderId] = newName;
+      await _saveCustomFolders();
+    }
+  }
+
+  // Eliminar una carpeta personalizada
+  static Future<void> deleteFolder(String folderId) async {
+    customFolders.remove(folderId);
+    await _saveCustomFolders();
+  }
+
+  // Verificar si es una carpeta por defecto (no se puede eliminar)
+  static bool isDefaultFolder(String folderId) {
+    return defaultFolders.containsKey(folderId);
   }
 
   // Obtener nombre de carpeta
