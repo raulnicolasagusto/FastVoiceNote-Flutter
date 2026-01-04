@@ -83,7 +83,21 @@ class VoiceToChecklistProcessor {
     }
 
     // Extraer el texto después de la palabra clave
-    final remainingText = transcribedText.substring(keywordEndIndex).trim();
+    // Usar el texto original pero desde la posición correcta
+    var remainingText = transcribedText.substring(keywordEndIndex).trim();
+    
+    // Eliminar coma inicial si existe (caso: "new list, item1, item2")
+    if (remainingText.startsWith(',')) {
+      remainingText = remainingText.substring(1).trim();
+    }
+    
+    // Eliminar caracteres sueltos al inicio (errores de transcripción como "new listt" → "t")
+    // Si el texto empieza con 1-2 letras seguidas de espacio, eliminarlas
+    final singleCharPattern = RegExp(r'^[a-z]{1,2}\s+', caseSensitive: false);
+    final match = singleCharPattern.firstMatch(remainingText);
+    if (match != null) {
+      remainingText = remainingText.substring(match.end).trim();
+    }
     
     // Si no hay texto después de la palabra clave, crear lista vacía
     if (remainingText.isEmpty) {
@@ -113,43 +127,48 @@ class VoiceToChecklistProcessor {
   static List<ChecklistItem> _extractListItems(String text, String language) {
     final items = <ChecklistItem>[];
     
-    // Primero intentar separar por comas y conectores comunes
+    // Obtener separadores para el idioma
     final separatorsForLang = _getSeparatorsForLanguage(language);
     
-    // Crear patrón regex para separadores
-    final separatorPattern = separatorsForLang.map((sep) => '\\b$sep\\b').join('|');
-    final regex = RegExp('($separatorPattern)', caseSensitive: false);
+    // Enfoque simple: dividir primero por comas, luego por conectores
+    List<String> parts = [text];
     
-    // Dividir el texto usando los separadores
-    final parts = text.split(regex).where((part) => 
-      part.trim().isNotEmpty && !separatorsForLang.contains(part.trim().toLowerCase())
-    ).toList();
-    
-    // Si no se encontraron separadores, tratar todo como un solo elemento
-    if (parts.length <= 1) {
-      items.add(ChecklistItem(
-        id: ChecklistUtils.generateItemId(),
-        text: text.trim(),
-      ));
-    } else {
-      // Crear un elemento para cada parte
+    // Dividir por cada tipo de separador
+    for (final separator in separatorsForLang) {
+      List<String> newParts = [];
       for (final part in parts) {
-        final cleanedPart = _cleanItemText(part.trim());
-        if (cleanedPart.isNotEmpty) {
-          items.add(ChecklistItem(
-            id: ChecklistUtils.generateItemId(),
-            text: cleanedPart,
-          ));
+        if (separator == ',') {
+          // Para comas, dividir directamente
+          newParts.addAll(part.split(','));
+        } else {
+          // Para palabras conectoras, dividir con espacios
+          final regex = RegExp('\\s+$separator\\s+', caseSensitive: false);
+          newParts.addAll(part.split(regex));
         }
       }
+      parts = newParts;
     }
     
-    // Si no se creó ningún elemento, crear uno vacío
-    if (items.isEmpty) {
+    // Limpiar y filtrar partes
+    final cleanedParts = parts
+        .map((part) => _cleanItemText(part))
+        .where((part) => part.isNotEmpty && !_isSeparatorWord(part, separatorsForLang))
+        .toList();
+    
+    // Crear elementos
+    if (cleanedParts.isEmpty) {
+      final cleaned = _cleanItemText(text);
       items.add(ChecklistItem(
         id: ChecklistUtils.generateItemId(),
-        text: '',
+        text: cleaned.isEmpty ? '' : cleaned,
       ));
+    } else {
+      for (final part in cleanedParts) {
+        items.add(ChecklistItem(
+          id: ChecklistUtils.generateItemId(),
+          text: part,
+        ));
+      }
     }
     
     return items;
@@ -166,6 +185,12 @@ class VoiceToChecklistProcessor {
       default:
         return [',', 'and', 'also', 'then', 'plus'];
     }
+  }
+
+  /// Verifica si una palabra es un separador
+  static bool _isSeparatorWord(String word, List<String> separators) {
+    final normalizedWord = word.toLowerCase().trim();
+    return separators.any((sep) => sep != ',' && normalizedWord == sep);
   }
 
   /// Limpia el texto de un elemento individual

@@ -6,6 +6,7 @@ import '../widgets/note_options_dialog.dart';
 import '../widgets/checklist_widget.dart';
 import '../models/checklist_item.dart';
 import '../models/checklist_utils.dart';
+import '../models/note.dart';
 
 class NoteDetailScreen extends StatefulWidget {
   final String noteId;
@@ -109,12 +110,33 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
     );
   }
 
-  Future<void> _convertToChecklist(note) async {
-    // Si ya hay checklist, reiniciar uno nuevo preservando el texto original
-    final baseText = ChecklistUtils.hasChecklist(note.content)
-        ? ChecklistUtils.getText(note.content)
-        : note.content;
-
+  Future<void> _convertToChecklist(Note note) async {
+    // Si ya hay checklist, solo activar modo edición y agregar un item nuevo
+    if (ChecklistUtils.hasChecklist(note.content)) {
+      setState(() {
+        _isChecklistEditing = true;
+      });
+      
+      // Agregar un nuevo item vacío al final
+      final currentItems = ChecklistUtils.jsonToItems(note.content);
+      final newItem = ChecklistItem(
+        id: ChecklistUtils.generateItemId(),
+        text: '',
+      );
+      currentItems.add(newItem);
+      
+      // Actualizar con el nuevo item
+      final originalText = ChecklistUtils.getText(note.content);
+      final checklistContent = ChecklistUtils.itemsToJson(currentItems, originalText);
+      await context.read<NotesProvider>().updateNote(
+        widget.noteId,
+        content: checklistContent,
+      );
+      return;
+    }
+    
+    // Si NO hay checklist, crear uno nuevo con el contenido actual como texto
+    final baseText = note.content;
     final checklistContent = ChecklistUtils.addChecklistToContent(baseText);
     await context.read<NotesProvider>().updateNote(
       widget.noteId,

@@ -78,9 +78,13 @@ class ChecklistUtils {
     return getText(content);
   }
 
+  static int _idCounter = 0;
+
   /// Genera ID único para un nuevo item
   static String generateItemId() {
-    return DateTime.now().millisecondsSinceEpoch.toString();
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    _idCounter++;
+    return '${timestamp}_$_idCounter';
   }
 
   /// Genera una vista previa legible del contenido (texto + checklist)

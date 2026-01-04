@@ -1,9 +1,36 @@
-import '../lib/src/features/transcription/utils/voice_to_checklist_processor.dart';
+import 'lib/src/features/transcription/utils/voice_to_checklist_processor.dart';
 
 /// Ejemplo de prueba para verificar la funcionalidad de detección de listas por voz
 void main() {
+  // Test casos específicos mencionados por el usuario
+  print('=== TESTS ESPECÍFICOS DEL PROBLEMA ===');
+  testVoiceToChecklist(
+    'new list milk, eggs, cookies',
+    'en',
+  );
+  
+  testVoiceToChecklist(
+    'new list, eggs, milk, chocolate',
+    'en',
+  );
+  
+  testVoiceToChecklist(
+    'new list , eggs, milk, chocolate',
+    'en',
+  );
+  
+  testVoiceToChecklist(
+    'new listt eggs, milk, chocolate',
+    'en',
+  );
+  
+  testVoiceToChecklist(
+    'lista nueva leche, huevos, galletas',
+    'es',
+  );
+
   // Test en inglés
-  print('=== TESTS EN INGLÉS ===');
+  print('\n=== TESTS EN INGLÉS ===');
   testVoiceToChecklist(
     'new list apple, milk, bread, and eggs',
     'en',

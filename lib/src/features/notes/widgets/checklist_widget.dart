@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/checklist_item.dart';
@@ -26,6 +27,8 @@ class _ChecklistWidgetState extends State<ChecklistWidget> {
   late List<ChecklistItem> _items;
   late bool _isEditing;
   final Map<String, TextEditingController> _controllers = {};
+  final Map<String, FocusNode> _focusNodes = {};
+  Timer? _debounceTimer;
 
   @override
   void initState() {
@@ -38,32 +41,76 @@ class _ChecklistWidgetState extends State<ChecklistWidget> {
   @override
   void didUpdateWidget(ChecklistWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.items != widget.items) {
-      _items = List.from(widget.items);
-      _initializeControllers();
-    }
+    
+    // Solo actualizar si cambió el modo de edición
     if (oldWidget.isEditing != widget.isEditing) {
       _isEditing = widget.isEditing;
     }
+    
+    // Solo reinicializar si los items cambiaron desde FUERA (no por edición interna)
+    // Comparamos por referencia para evitar actualizaciones cuando editamos internamente
+    if (!identical(oldWidget.items, widget.items) && !identical(widget.items, _items)) {
+      _syncWithExternalChanges();
+    }
+  }
+
+  void _syncWithExternalChanges() {
+    final newItems = List<ChecklistItem>.from(widget.items);
+    final oldIds = _items.map((i) => i.id).toSet();
+    final newIds = newItems.map((i) => i.id).toSet();
+    
+    // Eliminar controllers de items que ya no existen
+    for (var id in oldIds.difference(newIds)) {
+      _controllers[id]?.dispose();
+      _controllers.remove(id);
+      _focusNodes[id]?.dispose();
+      _focusNodes.remove(id);
+    }
+    
+    // Crear controllers para items nuevos O actualizar texto si cambió externamente
+    for (var item in newItems) {
+      if (!_controllers.containsKey(item.id)) {
+        // Item nuevo - crear controller
+        _controllers[item.id] = TextEditingController(text: item.text);
+        _focusNodes[item.id] = FocusNode();
+      } else {
+        // Item existente - solo actualizar si el texto cambió y no está enfocado
+        final controller = _controllers[item.id]!;
+        final focusNode = _focusNodes[item.id]!;
+        
+        // Solo actualizar si no tiene foco (no está siendo editado)
+        if (!focusNode.hasFocus && controller.text != item.text) {
+          // Guardar posición del cursor por si acaso
+          final selection = controller.selection;
+          controller.text = item.text;
+          
+          // Restaurar selección si es válida
+          if (selection.isValid && selection.end <= item.text.length) {
+            controller.selection = selection;
+          }
+        }
+      }
+    }
+    
+    _items = newItems;
   }
 
   void _initializeControllers() {
-    // Dispose old controllers
-    for (var controller in _controllers.values) {
-      controller.dispose();
-    }
-    _controllers.clear();
-
-    // Create new controllers
+    // Create controllers and focus nodes for all items
     for (var item in _items) {
       _controllers[item.id] = TextEditingController(text: item.text);
+      _focusNodes[item.id] = FocusNode();
     }
   }
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
     for (var controller in _controllers.values) {
       controller.dispose();
+    }
+    for (var focusNode in _focusNodes.values) {
+      focusNode.dispose();
     }
     super.dispose();
   }
@@ -88,14 +135,13 @@ class _ChecklistWidgetState extends State<ChecklistWidget> {
       final newItem = ChecklistItem(id: newId, text: '');
       _items.add(newItem);
       _controllers[newId] = TextEditingController(text: '');
+      _focusNodes[newId] = FocusNode();
       _isEditing = true;
       _updateItems();
       
       // Focus on the new item after build
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        _controllers[newId]?.selection = TextSelection.fromPosition(
-          TextPosition(offset: _controllers[newId]!.text.length),
-        );
+        _focusNodes[newId]?.requestFocus();
       });
     });
   }
@@ -104,19 +150,24 @@ class _ChecklistWidgetState extends State<ChecklistWidget> {
     setState(() {
       _controllers[itemId]?.dispose();
       _controllers.remove(itemId);
+      _focusNodes[itemId]?.dispose();
+      _focusNodes.remove(itemId);
       _items.removeWhere((item) => item.id == itemId);
       _updateItems();
     });
   }
 
   void _updateItemText(String itemId, String text) {
-    setState(() {
-      final index = _items.indexWhere((item) => item.id == itemId);
-      if (index != -1) {
-        _items[index] = _items[index].copyWith(text: text);
-        _updateItems();
-      }
-    });
+    final index = _items.indexWhere((item) => item.id == itemId);
+    if (index != -1) {
+      _items[index] = _items[index].copyWith(text: text);
+      
+      // Usar debounce para actualizar el provider (500ms)
+      _debounceTimer?.cancel();
+      _debounceTimer = Timer(const Duration(milliseconds: 500), () {
+        widget.onItemsChanged(_items);
+      });
+    }
   }
 
   void _onItemTap(String itemId) {
@@ -138,10 +189,13 @@ class _ChecklistWidgetState extends State<ChecklistWidget> {
         ...List.generate(_items.length, (index) {
           final item = _items[index];
           final controller = _controllers[item.id]!;
+          final focusNode = _focusNodes[item.id]!;
 
           return _ChecklistItemWidget(
+            key: ValueKey(item.id),
             item: item,
             controller: controller,
+            focusNode: focusNode,
             isEditing: _isEditing,
             isDark: isDark,
             onTap: () => _onItemTap(item.id),
@@ -198,6 +252,7 @@ class _ChecklistWidgetState extends State<ChecklistWidget> {
 class _ChecklistItemWidget extends StatefulWidget {
   final ChecklistItem item;
   final TextEditingController controller;
+  final FocusNode focusNode;
   final bool isEditing;
   final bool isDark;
   final VoidCallback onTap;
@@ -207,8 +262,10 @@ class _ChecklistItemWidget extends StatefulWidget {
   final VoidCallback? onEditModeRequested;
 
   const _ChecklistItemWidget({
+    super.key,
     required this.item,
     required this.controller,
+    required this.focusNode,
     required this.isEditing,
     required this.isDark,
     required this.onTap,
@@ -247,6 +304,7 @@ class _ChecklistItemWidgetState extends State<_ChecklistItemWidget> {
             child: widget.isEditing || _isEditingText
                 ? TextField(
                     controller: widget.controller,
+                    focusNode: widget.focusNode,
                     autofocus: _isEditingText && !widget.isEditing,
                     style: GoogleFonts.inter(
                       fontSize: 16,
