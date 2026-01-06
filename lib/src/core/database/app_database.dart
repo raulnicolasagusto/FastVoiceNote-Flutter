@@ -29,7 +29,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -37,11 +37,16 @@ class AppDatabase extends _$AppDatabase {
       await m.createAll();
     },
     onUpgrade: (Migrator m, int from, int to) async {
-      if (from == 1) {
+      if (from < 2) {
         await m.addColumn(notes, notes.folderId);
       }
-      if (from == 2) {
-        await m.addColumn(notes, notes.isPinned as GeneratedColumn);
+      if (from <= 3) {
+        // Add isPinned column for versions 3 and below
+        try {
+          await m.addColumn(notes, notes.isPinned as GeneratedColumn);
+        } catch (e) {
+          // Column might already exist, ignore
+        }
       }
     },
   );
@@ -60,7 +65,7 @@ class AppDatabase extends _$AppDatabase {
 LazyDatabase _openConnection() {
   return LazyDatabase(() async {
     final dbFolder = await getApplicationDocumentsDirectory();
-    final file = File(p.join(dbFolder.path, 'db.sqlite'));
+    final file = File(p.join(dbFolder.path, 'notes_v4.sqlite'));
     return NativeDatabase.createInBackground(file);
   });
 }

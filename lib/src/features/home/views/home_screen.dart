@@ -30,6 +30,7 @@ class _HomeScreenState extends State<HomeScreen>
   late TabController _tabController;
   bool _isFabExpanded = false;
   final Set<String> _selectedNotes = {};
+  bool _foldersLoaded = false;
 
   @override
   void initState() {
@@ -43,7 +44,6 @@ class _HomeScreenState extends State<HomeScreen>
       curve: Curves.easeOutBack,
       reverseCurve: Curves.easeInBack,
     );
-    _tabController = TabController(length: 20, vsync: this); // Large enough
     _loadFolders();
   }
 
@@ -51,10 +51,10 @@ class _HomeScreenState extends State<HomeScreen>
     await AppFolders.loadCustomFolders();
     if (mounted) {
       final newLength = 1 + AppFolders.getAllFolders().length;
-      final oldController = _tabController;
       _tabController = TabController(length: newLength, vsync: this);
-      oldController.dispose();
-      setState(() {});
+      setState(() {
+        _foldersLoaded = true;
+      });
     }
   }
 
@@ -531,7 +531,7 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
-  void _onNewNote() {
+  Future<void> _onNewNote() async {
     final l10n = AppLocalizations.of(context)!;
     final now = DateTime.now();
     final dateStr = DateFormat.yMd().add_Hm().format(now);
@@ -546,7 +546,7 @@ class _HomeScreenState extends State<HomeScreen>
       color: 'FFFFFFFF',
     );
 
-    context.read<NotesProvider>().addNote(newNote);
+    await context.read<NotesProvider>().addNote(newNote);
     _toggleFab();
     context.push('/note/$id');
   }
@@ -556,6 +556,13 @@ class _HomeScreenState extends State<HomeScreen>
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final notes = context.watch<NotesProvider>().notes;
+
+    // Show loading until folders are loaded
+    if (!_foldersLoaded) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
 
     return Scaffold(
       key: _scaffoldKey,

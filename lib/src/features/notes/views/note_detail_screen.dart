@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import '../../../core/l10n/generated/app_localizations.dart';
+import '../../transcription/services/audio_recorder_service.dart';
+import '../../transcription/widgets/recording_dialog.dart';
+import '../../transcription/utils/voice_add_to_note_processor.dart';
 import '../providers/notes_provider.dart';
 import '../widgets/note_options_dialog.dart';
 import '../widgets/checklist_widget.dart';
@@ -184,6 +188,132 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
     });
   }
 
+  Future<void> _onVoiceRecording() async {
+    final note = context.read<NotesProvider>().getNoteById(widget.noteId);
+    if (note == null) return;
+
+    // Initialize recorder service
+    final recorderService = AudioRecorderService();
+    try {
+      // Set language based on app's current locale
+      final locale = Localizations.localeOf(context);
+      final languageCode = locale.languageCode;
+      recorderService.setLanguage(languageCode);
+      
+      await recorderService.init();
+
+      // Start recording
+      final started = await recorderService.startRecording();
+      if (!started && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Microphone permission denied')),
+        );
+        return;
+      }
+
+      if (!mounted) return;
+
+      // Show recording dialog (reusing the same dialog as Quick Voice Note)
+      final transcriptionResult = await showDialog<String>(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) => RecordingDialog(
+          onCancel: () async {
+            await recorderService.cancel();
+            Navigator.of(dialogContext).pop();
+          },
+          onStop: () async {
+            final processed = await recorderService.stopAndTranscribe();
+            Navigator.of(dialogContext).pop(processed?.originalText ?? '');
+          },
+        ),
+      );
+
+      if (transcriptionResult == null || transcriptionResult.isEmpty || !mounted) {
+        return;
+      }
+
+      // Process the transcription to determine what to do
+      final hasChecklist = ChecklistUtils.hasChecklist(note.content);
+      final result = VoiceAddToNoteProcessor.processAddToNote(
+        transcribedText: transcriptionResult,
+        language: languageCode,
+        isChecklist: hasChecklist,
+      );
+
+      if (result.shouldAddItems && result.itemsToAdd.isNotEmpty) {
+        // User wants to add items to checklist
+        final currentItems = ChecklistUtils.jsonToItems(note.content);
+        final updatedItems = [...currentItems, ...result.itemsToAdd];
+        
+        final originalText = ChecklistUtils.getText(note.content);
+        final newContent = ChecklistUtils.itemsToJson(updatedItems, originalText);
+        
+        await context.read<NotesProvider>().updateNote(
+          widget.noteId,
+          content: newContent,
+        );
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Added ${result.itemsToAdd.length} item(s) to checklist'),
+            ),
+          );
+        }
+      } else if (result.textToAdd.isNotEmpty) {
+        // User wants to add text to note
+        final currentText = hasChecklist 
+            ? ChecklistUtils.getText(note.content)
+            : note.content;
+        
+        // Append the new text with proper spacing
+        final newText = currentText.isEmpty 
+            ? result.textToAdd
+            : '$currentText\n\n${result.textToAdd}';
+        
+        if (hasChecklist) {
+          // Maintain checklist and update text part
+          final items = ChecklistUtils.jsonToItems(note.content);
+          final newContent = ChecklistUtils.itemsToJson(items, newText);
+          
+          await context.read<NotesProvider>().updateNote(
+            widget.noteId,
+            content: newContent,
+          );
+          
+          setState(() {
+            _contentController.text = newText;
+          });
+        } else {
+          // Regular note, just update content
+          await context.read<NotesProvider>().updateNote(
+            widget.noteId,
+            content: newText,
+          );
+          
+          setState(() {
+            _contentController.text = newText;
+          });
+        }
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Text added to note')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    } finally {
+      recorderService.dispose();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final note = context.watch<NotesProvider>().getNoteById(widget.noteId);
@@ -235,7 +365,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                   ),
                   IconButton(
                     icon: const Icon(Icons.mic_none),
-                    onPressed: () {},
+                    onPressed: _onVoiceRecording,
                   ),
                   IconButton(
                     icon: const Icon(Icons.palette_outlined),

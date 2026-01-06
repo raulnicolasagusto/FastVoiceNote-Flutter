@@ -73,8 +73,8 @@ class NotesProvider extends ChangeNotifier {
     }
   }
 
-  void addNote(Note note) {
-    _database.insertNote(
+  Future<void> addNote(Note note) async {
+    await _database.insertNote(
       NoteEntity(
         id: note.id,
         title: note.title,
