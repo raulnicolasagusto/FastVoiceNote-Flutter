@@ -91,12 +91,35 @@ class VoiceToChecklistProcessor {
       remainingText = remainingText.substring(1).trim();
     }
     
-    // Eliminar caracteres sueltos al inicio (errores de transcripción como "new listt" → "t")
-    // Si el texto empieza con 1-2 letras seguidas de espacio, eliminarlas
-    final singleCharPattern = RegExp(r'^[a-z]{1,2}\s+', caseSensitive: false);
-    final match = singleCharPattern.firstMatch(remainingText);
-    if (match != null) {
-      remainingText = remainingText.substring(match.end).trim();
+    // Eliminar SOLO caracteres sueltos que parecen errores de transcripción
+    // Casos cubiertos:
+    // 1. Una sola letra seguida de coma: "t, eggs" → "eggs"
+    // 2. Una sola letra seguida de espacio y luego contenido: "t eggs" → "eggs"
+    //    PERO solo si la siguiente palabra NO forma una frase válida común
+    final singleErrorPattern = RegExp(r'^([a-z])\s*,\s*', caseSensitive: false);
+    final singleLetterSpace = RegExp(r'^([a-z])\s+([a-z]+)', caseSensitive: false);
+    
+    final matchError = singleErrorPattern.firstMatch(remainingText);
+    if (matchError != null) {
+      // Solo una letra seguida de coma, probablemente un error
+      remainingText = remainingText.substring(matchError.end).trim();
+    } else {
+      // Verificar si es una letra seguida de espacio y otra palabra
+      final matchLetter = singleLetterSpace.firstMatch(remainingText);
+      if (matchLetter != null) {
+        final letter = matchLetter.group(1)!.toLowerCase();
+        final nextWord = matchLetter.group(2)!.toLowerCase();
+        
+        // Solo eliminar si NO es un artículo común o preposición que forma frase válida
+        // Mantener: "a book", "a dog", etc. (en inglés "a" + sustantivo)
+        // Mantener: "I went", "o sea" (conjunciones)
+        // Eliminar: "t eggs", "x milk" (errores obvios)
+        final validSingleLetterWords = ['a', 'i', 'o', 'u', 'y', 'e'];
+        if (!validSingleLetterWords.contains(letter)) {
+          // Es probablemente un error, eliminar
+          remainingText = remainingText.substring(matchLetter.group(1)!.length).trim();
+        }
+      }
     }
     
     // Si no hay texto después de la palabra clave, crear lista vacía

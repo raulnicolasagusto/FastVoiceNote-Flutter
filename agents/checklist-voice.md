@@ -185,8 +185,25 @@ static String _cleanItemText(String text)
 static const Map<String, List<String>> _triggerKeywords
 
 // Separadores comunes
-static const _itemSeparators = [',', 'and', 'y', 'e', 'also', 'también', 'também']
+static const _itemSeparators = [',', 'and', 'y', 'e', 'also', 'también', 'també']
 ```
+
+#### **Manejo de Errores de Transcripción:**
+
+El procesador incluye lógica inteligente para eliminar errores comunes de transcripción de Whisper:
+
+- **Errores detectados y eliminados:**
+  - Letras sueltas seguidas de coma: `"new list t, eggs"` → `"eggs"`
+  - Letras de error no válidas: `"new listt eggs"` → `"eggs"` (elimina la "t")
+  - Caracteres extraños: `"new list x, milk"` → `"milk"`
+
+- **Palabras válidas preservadas:**
+  - Artículos: `"new list a book"` → `"a book"` ✅
+  - Pronombres: `"new list I need milk"` → `"I need milk"` ✅
+  - Conjunciones: `"lista y luego pan"` → `"y luego pan"` ✅
+  - Vocales válidas: `"a"`, `"i"`, `"o"`, `"u"`, `"y"`, `"e"` se preservan cuando forman frases válidas
+
+---
 
 ### **2. ProcessedTranscription**
 
