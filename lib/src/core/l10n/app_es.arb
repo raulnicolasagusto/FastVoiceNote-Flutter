@@ -38,5 +38,9 @@
   "noteLockedDeleteMultiple": "No se pueden eliminar las notas. Una o más notas están bloqueadas.",
   "noteLocked": "Nota bloqueada",
   "noteUnlocked": "Nota desbloqueada",
-  "ok": "Aceptar"
+  "ok": "Aceptar",
+  "shareOptions": "Opciones para Compartir",
+  "shareAsImage": "Compartir como imagen",
+  "shareAsText": "Compartir como texto",
+  "createdWithNotes": "Creado con Notas"
 }

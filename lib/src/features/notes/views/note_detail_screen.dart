@@ -11,7 +11,9 @@ import '../widgets/note_options_dialog.dart';
 import '../widgets/checklist_widget.dart';
 import '../widgets/color_picker_modal.dart';
 import '../widgets/photo_options_dialog.dart';
+import '../widgets/share_options_dialog.dart';
 import '../services/image_service.dart';
+import '../services/share_service.dart';
 import '../models/checklist_item.dart';
 import '../models/checklist_utils.dart';
 import '../models/note.dart';
@@ -143,9 +145,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
           }
         },
         onLock: _toggleLock,
-        onShare: () {
-          // TODO: Implement share functionality
-        },
+        onShare: _showShareOptions,
         onAddToHomeScreen: () {
           // TODO: Implement add to home screen functionality
         },
@@ -186,6 +186,53 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
         ],
       ),
     );
+  }
+
+  void _showShareOptions() {
+    final note = context.read<NotesProvider>().getNoteById(widget.noteId);
+    if (note == null) return;
+
+    showDialog(
+      context: context,
+      builder: (context) => ShareOptionsDialog(
+        onShareAsImage: () => _shareAsImage(note),
+        onShareAsText: () => _shareAsText(note),
+      ),
+    );
+  }
+
+  Future<void> _shareAsImage(Note note) async {
+    try {
+      final shareService = ShareService();
+      await shareService.shareNoteAsImage(
+        context: context,
+        title: note.title,
+        content: note.content,
+        noteColor: Color(int.parse('0x${note.color}')),
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error sharing note as image')),
+        );
+      }
+    }
+  }
+
+  Future<void> _shareAsText(Note note) async {
+    try {
+      final shareService = ShareService();
+      await shareService.shareNoteAsText(
+        title: note.title,
+        content: note.content,
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error sharing note as text')),
+        );
+      }
+    }
   }
 
   void _showPhotoOptions() {

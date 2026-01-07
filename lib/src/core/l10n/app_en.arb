@@ -38,5 +38,9 @@
   "noteLockedDeleteMultiple": "Cannot delete notes. One or more notes are locked.",
   "noteLocked": "Note locked",
   "noteUnlocked": "Note unlocked",
-  "ok": "OK"
+  "ok": "OK",
+  "shareOptions": "Share Options",
+  "shareAsImage": "Share as image",
+  "shareAsText": "Share as text",
+  "createdWithNotes": "Created with Notes"
 }
