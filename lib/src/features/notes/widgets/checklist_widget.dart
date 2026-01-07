@@ -10,6 +10,7 @@ class ChecklistWidget extends StatefulWidget {
   final Function(List<ChecklistItem>) onItemsChanged;
   final bool isEditing;
   final VoidCallback? onEditModeRequested;
+  final String searchQuery;
 
   const ChecklistWidget({
     super.key,
@@ -17,6 +18,7 @@ class ChecklistWidget extends StatefulWidget {
     required this.onItemsChanged,
     this.isEditing = false,
     this.onEditModeRequested,
+    this.searchQuery = '',
   });
 
   @override
@@ -204,6 +206,7 @@ class _ChecklistWidgetState extends State<ChecklistWidget> {
             onTextChanged: (text) => _updateItemText(item.id, text),
             onDelete: () => _deleteItem(item.id),
             onEditModeRequested: widget.onEditModeRequested,
+            searchQuery: widget.searchQuery,
           );
         }),
 
@@ -261,6 +264,7 @@ class _ChecklistItemWidget extends StatefulWidget {
   final Function(String) onTextChanged;
   final VoidCallback onDelete;
   final VoidCallback? onEditModeRequested;
+  final String searchQuery;
 
   const _ChecklistItemWidget({
     super.key,
@@ -274,6 +278,7 @@ class _ChecklistItemWidget extends StatefulWidget {
     required this.onTextChanged,
     required this.onDelete,
     this.onEditModeRequested,
+    this.searchQuery = '',
   });
 
   @override
@@ -282,6 +287,43 @@ class _ChecklistItemWidget extends StatefulWidget {
 
 class _ChecklistItemWidgetState extends State<_ChecklistItemWidget> {
   bool _isEditingText = false;
+
+  TextSpan _buildHighlightedText(String text, TextStyle style, Color highlightColor) {
+    final searchQuery = widget.searchQuery.toLowerCase();
+    if (searchQuery.isEmpty) {
+      return TextSpan(text: text, style: style);
+    }
+
+    final List<TextSpan> spans = [];
+    final lowerText = text.toLowerCase();
+    int currentIndex = 0;
+
+    while (currentIndex < text.length) {
+      final index = lowerText.indexOf(searchQuery, currentIndex);
+      if (index == -1) {
+        spans.add(TextSpan(text: text.substring(currentIndex), style: style));
+        break;
+      }
+
+      // Add text before match
+      if (index > currentIndex) {
+        spans.add(TextSpan(text: text.substring(currentIndex, index), style: style));
+      }
+
+      // Add highlighted match
+      spans.add(TextSpan(
+        text: text.substring(index, index + searchQuery.length),
+        style: style.copyWith(
+          backgroundColor: highlightColor,
+          color: Colors.black87,
+        ),
+      ));
+
+      currentIndex = index + searchQuery.length;
+    }
+
+    return TextSpan(children: spans);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -353,17 +395,20 @@ class _ChecklistItemWidgetState extends State<_ChecklistItemWidget> {
                     onTap: widget.onTap,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 12.0),
-                      child: Text(
-                        widget.item.text.isEmpty ? ' ' : widget.item.text,
-                        style: GoogleFonts.inter(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w400,
-                          color: widget.item.isChecked
-                              ? textColor.withValues(alpha: 0.5)
-                              : textColor,
-                          decoration: widget.item.isChecked
-                              ? TextDecoration.lineThrough
-                              : null,
+                      child: RichText(
+                        text: _buildHighlightedText(
+                          widget.item.text.isEmpty ? ' ' : widget.item.text,
+                          GoogleFonts.inter(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w400,
+                            color: widget.item.isChecked
+                                ? textColor.withValues(alpha: 0.5)
+                                : textColor,
+                            decoration: widget.item.isChecked
+                                ? TextDecoration.lineThrough
+                                : null,
+                          ),
+                          Colors.yellow.shade300,
                         ),
                       ),
                     ),

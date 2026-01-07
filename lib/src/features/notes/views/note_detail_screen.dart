@@ -28,6 +28,14 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
   bool _isEditingTitle = false;
   bool _isEditingContent = false;
   bool _isChecklistEditing = false;
+  
+  // Search state
+  bool _isSearching = false;
+  final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
+  String _searchQuery = '';
+  int _currentMatchIndex = 0;
+  int _totalMatches = 0;
 
   @override
   void initState() {
@@ -40,12 +48,16 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
         ? ChecklistUtils.getText(content) 
         : content;
     _contentController = TextEditingController(text: textContent);
+    
+    _searchController.addListener(_onSearchChanged);
   }
 
   @override
   void dispose() {
     _titleController.dispose();
     _contentController.dispose();
+    _searchController.dispose();
+    _searchFocusNode.dispose();
     super.dispose();
   }
 
@@ -187,6 +199,128 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
     setState(() {
       _isChecklistEditing = !_isChecklistEditing;
     });
+  }
+
+  // Search methods
+  void _onSearchChanged() {
+    setState(() {
+      _searchQuery = _searchController.text.toLowerCase();
+      _updateMatchCount();
+    });
+  }
+
+  void _updateMatchCount() {
+    if (_searchQuery.isEmpty) {
+      _totalMatches = 0;
+      _currentMatchIndex = 0;
+      return;
+    }
+
+    final note = context.read<NotesProvider>().getNoteById(widget.noteId);
+    if (note == null) return;
+
+    int count = 0;
+    
+    // Count in title
+    count += _countMatches(note.title.toLowerCase(), _searchQuery);
+    
+    // Count in text content
+    final textContent = ChecklistUtils.getText(note.content).toLowerCase();
+    count += _countMatches(textContent, _searchQuery);
+    
+    // Count in checklist items
+    if (ChecklistUtils.hasChecklist(note.content)) {
+      final items = ChecklistUtils.jsonToItems(note.content);
+      for (var item in items) {
+        count += _countMatches(item.text.toLowerCase(), _searchQuery);
+      }
+    }
+
+    _totalMatches = count;
+    if (_currentMatchIndex > _totalMatches) {
+      _currentMatchIndex = _totalMatches > 0 ? 1 : 0;
+    } else if (_currentMatchIndex == 0 && _totalMatches > 0) {
+      _currentMatchIndex = 1;
+    }
+  }
+
+  int _countMatches(String text, String query) {
+    if (query.isEmpty || text.isEmpty) return 0;
+    int count = 0;
+    int index = 0;
+    while ((index = text.indexOf(query, index)) != -1) {
+      count++;
+      index += query.length;
+    }
+    return count;
+  }
+
+  void _toggleSearch() {
+    setState(() {
+      _isSearching = !_isSearching;
+      if (_isSearching) {
+        _searchFocusNode.requestFocus();
+      } else {
+        _searchController.clear();
+        _searchQuery = '';
+        _currentMatchIndex = 0;
+        _totalMatches = 0;
+      }
+    });
+  }
+
+  void _nextMatch() {
+    if (_totalMatches > 0) {
+      setState(() {
+        _currentMatchIndex = (_currentMatchIndex % _totalMatches) + 1;
+      });
+    }
+  }
+
+  void _previousMatch() {
+    if (_totalMatches > 0) {
+      setState(() {
+        _currentMatchIndex = _currentMatchIndex > 1 ? _currentMatchIndex - 1 : _totalMatches;
+      });
+    }
+  }
+
+  TextSpan _buildHighlightedText(String text, TextStyle? style, Color highlightColor) {
+    if (_searchQuery.isEmpty) {
+      return TextSpan(text: text, style: style);
+    }
+
+    final List<TextSpan> spans = [];
+    final lowerText = text.toLowerCase();
+    int currentIndex = 0;
+    int matchIndex = 0;
+
+    while (currentIndex < text.length) {
+      final index = lowerText.indexOf(_searchQuery, currentIndex);
+      if (index == -1) {
+        spans.add(TextSpan(text: text.substring(currentIndex), style: style));
+        break;
+      }
+
+      // Add text before match
+      if (index > currentIndex) {
+        spans.add(TextSpan(text: text.substring(currentIndex, index), style: style));
+      }
+
+      // Add highlighted match
+      spans.add(TextSpan(
+        text: text.substring(index, index + _searchQuery.length),
+        style: style?.copyWith(
+          backgroundColor: highlightColor,
+          color: Colors.black87,
+        ),
+      ));
+
+      currentIndex = index + _searchQuery.length;
+      matchIndex++;
+    }
+
+    return TextSpan(children: spans);
   }
 
   Future<void> _onVoiceRecording() async {
@@ -400,7 +534,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                   IconButton(
                     icon: Icon(
                       note.isPinned ? Icons.star : Icons.star_border,
-                      color: note.isPinned ? Colors.amber : Theme.of(context).iconTheme.color,
+                      color: note.isPinned ? Colors.amber : iconColor,
                     ),
                     onPressed: () {
                       context.read<NotesProvider>().togglePin(widget.noteId);
@@ -440,17 +574,69 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                       );
                     },
                   ),
-                  IconButton(icon: const Icon(Icons.search), onPressed: () {}),
-                  IconButton(
-                    icon: const Icon(Icons.more_vert),
-                    onPressed: _showOptionsDialog,
-                  ),
+                  if (!_isSearching) ...[
+                    IconButton(
+                      icon: const Icon(Icons.search),
+                      onPressed: _toggleSearch,
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.more_vert),
+                      onPressed: _showOptionsDialog,
+                    ),
+                  ] else ...[
+                    // Search navigation buttons
+                    if (_totalMatches > 0) ...[
+                      IconButton(
+                        icon: const Icon(Icons.keyboard_arrow_up),
+                        onPressed: _previousMatch,
+                        iconSize: 20,
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.keyboard_arrow_down),
+                        onPressed: _nextMatch,
+                        iconSize: 20,
+                      ),
+                    ],
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: _toggleSearch,
+                    ),
+                  ],
                 ],
               ),
             ),
 
-            // Date and character count
-            Builder(
+            // Search bar or Date and character count
+            if (_isSearching)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _searchController,
+                        focusNode: _searchFocusNode,
+                        autofocus: true,
+                        style: TextStyle(color: textColor),
+                        decoration: InputDecoration(
+                          hintText: 'Search in note...',
+                          hintStyle: TextStyle(color: hintColor),
+                          border: InputBorder.none,
+                          prefixIcon: Icon(Icons.search, color: iconColor),
+                        ),
+                      ),
+                    ),
+                    if (_totalMatches > 0)
+                      Text(
+                        '$_currentMatchIndex/$_totalMatches',
+                        style: TextStyle(color: hintColor, fontSize: 14),
+                      ),
+                  ],
+                ),
+              )
+            else
+              // Date and character count
+              Builder(
               builder: (context) {
                 final hasChecklist = ChecklistUtils.hasChecklist(note.content);
                 final textContent = ChecklistUtils.getText(note.content);
@@ -520,11 +706,14 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                               onSubmitted: (_) => _saveTitle(),
                               onTapOutside: (_) => _saveTitle(),
                             )
-                          : Text(
-                              note.title,
-                              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: textColor,
+                          : RichText(
+                              text: _buildHighlightedText(
+                                note.title,
+                                Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: textColor,
+                                ),
+                                Colors.yellow.shade300,
                               ),
                             ),
                     ),
@@ -563,12 +752,13 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                                       onSubmitted: (_) => _saveContent(),
                                     )
                                   : textContent.isNotEmpty || !hasChecklist
-                                      ? Text(
-                                          textContent.isEmpty
-                                              ? 'Toca para agregar contenido'
-                                              : textContent,
-                                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                            color: textContent.isEmpty ? hintColor : textColor,
+                                      ? RichText(
+                                          text: _buildHighlightedText(
+                                            textContent.isEmpty ? 'Toca para agregar contenido' : textContent,
+                                            Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                              color: textContent.isEmpty ? hintColor : textColor,
+                                            ),
+                                            Colors.yellow.shade300,
                                           ),
                                         )
                                       : const SizedBox.shrink(),
@@ -582,6 +772,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                                 isEditing: _isChecklistEditing,
                                 onItemsChanged: _onChecklistItemsChanged,
                                 onEditModeRequested: _toggleChecklistEdit,
+                                searchQuery: _searchQuery,
                               ),
                             ],
                           ],
