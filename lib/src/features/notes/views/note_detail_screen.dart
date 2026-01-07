@@ -9,6 +9,7 @@ import '../providers/notes_provider.dart';
 import '../widgets/note_options_dialog.dart';
 import '../widgets/checklist_widget.dart';
 import '../widgets/color_picker_modal.dart';
+import '../widgets/photo_options_dialog.dart';
 import '../models/checklist_item.dart';
 import '../models/checklist_utils.dart';
 import '../models/note.dart';
@@ -123,6 +124,20 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
           // TODO: Implement add to home screen functionality
         },
         isLocked: false, // TODO: Get from note state
+      ),
+    );
+  }
+
+  void _showPhotoOptions() {
+    showDialog(
+      context: context,
+      builder: (context) => PhotoOptionsDialog(
+        onTakePhoto: () {
+          // TODO: Implement take photo functionality
+        },
+        onUploadFile: () {
+          // TODO: Implement upload file functionality
+        },
       ),
     );
   }
@@ -542,7 +557,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                   ),
                   IconButton(
                     icon: const Icon(Icons.camera_alt_outlined),
-                    onPressed: () {},
+                    onPressed: _showPhotoOptions,
                   ),
                   IconButton(
                     icon: const Icon(Icons.mic_none),
