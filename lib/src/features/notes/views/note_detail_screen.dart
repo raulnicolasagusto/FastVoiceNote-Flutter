@@ -78,6 +78,13 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
   }
 
   Future<void> _saveTitle() async {
+    final note = context.read<NotesProvider>().getNoteById(widget.noteId);
+    if (note?.isLocked == true) {
+      _showLockedAlert();
+      setState(() => _isEditingTitle = false);
+      return;
+    }
+    
     if (_titleController.text.isNotEmpty) {
       await context.read<NotesProvider>().updateNote(
         widget.noteId,
@@ -90,6 +97,12 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
   Future<void> _saveContent() async {
     final note = context.read<NotesProvider>().getNoteById(widget.noteId);
     if (note == null) return;
+
+    if (note.isLocked) {
+      _showLockedAlert();
+      setState(() => _isEditingContent = false);
+      return;
+    }
 
     final hasChecklist = ChecklistUtils.hasChecklist(note.content);
     
@@ -129,21 +142,59 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
             _convertToChecklist(note);
           }
         },
-        onLock: () {
-          // TODO: Implement lock/unlock functionality
-        },
+        onLock: _toggleLock,
         onShare: () {
           // TODO: Implement share functionality
         },
         onAddToHomeScreen: () {
           // TODO: Implement add to home screen functionality
         },
-        isLocked: false, // TODO: Get from note state
+        isLocked: note?.isLocked ?? false,
+      ),
+    );
+  }
+
+  void _toggleLock() async {
+    final l10n = AppLocalizations.of(context)!;
+    final note = context.read<NotesProvider>().getNoteById(widget.noteId);
+    final willBeLocked = !(note?.isLocked ?? false);
+    
+    await context.read<NotesProvider>().toggleLock(widget.noteId);
+    
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(willBeLocked ? l10n.noteLocked : l10n.noteUnlocked),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  void _showLockedAlert() {
+    final l10n = AppLocalizations.of(context)!;
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.noteLockedTitle),
+        content: Text(l10n.noteLockedMessage),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('OK'),
+          ),
+        ],
       ),
     );
   }
 
   void _showPhotoOptions() {
+    final note = context.read<NotesProvider>().getNoteById(widget.noteId);
+    if (note?.isLocked == true) {
+      _showLockedAlert();
+      return;
+    }
+    
     showDialog(
       context: context,
       builder: (context) => PhotoOptionsDialog(
@@ -250,6 +301,11 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
   }
 
   Future<void> _convertToChecklist(Note note) async {
+    if (note.isLocked) {
+      _showLockedAlert();
+      return;
+    }
+    
     // Si ya hay checklist, solo activar modo edición y agregar un item nuevo
     if (ChecklistUtils.hasChecklist(note.content)) {
       setState(() {
@@ -290,6 +346,11 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
   Future<void> _onChecklistItemsChanged(List<ChecklistItem> items) async {
     final note = context.read<NotesProvider>().getNoteById(widget.noteId);
     if (note == null) return;
+
+    if (note.isLocked) {
+      _showLockedAlert();
+      return;
+    }
 
     // Si no hay items, remover el checklist y volver a texto normal
     if (items.isEmpty) {
@@ -448,6 +509,12 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
   Future<void> _onVoiceRecording() async {
     final note = context.read<NotesProvider>().getNoteById(widget.noteId);
     if (note == null) return;
+
+    // Check if note is locked
+    if (note.isLocked) {
+      _showLockedAlert();
+      return;
+    }
 
     // Initialize recorder service
     final recorderService = AudioRecorderService();
@@ -811,7 +878,13 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                   children: [
                     // Title
                     GestureDetector(
-                      onTap: () => setState(() => _isEditingTitle = true),
+                      onTap: () {
+                        if (note.isLocked) {
+                          _showLockedAlert();
+                        } else {
+                          setState(() => _isEditingTitle = true);
+                        }
+                      },
                       child: _isEditingTitle
                           ? TextField(
                               controller: _titleController,
@@ -855,7 +928,11 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                             // Text content (siempre visible, puede estar vacío)
                             GestureDetector(
                               onTap: () {
-                                setState(() => _isEditingContent = true);
+                                if (note.isLocked) {
+                                  _showLockedAlert();
+                                } else {
+                                  setState(() => _isEditingContent = true);
+                                }
                               },
                               child: isEditingContent
                                   ? TextField(

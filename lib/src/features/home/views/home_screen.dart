@@ -254,6 +254,55 @@ class _HomeScreenState extends State<HomeScreen>
     final count = _selectedNotes.length;
     if (count == 0) return;
 
+    // Check if any selected note is locked
+    final provider = context.read<NotesProvider>();
+    final hasLockedNotes = _selectedNotes.any((noteId) {
+      final note = provider.getNoteById(noteId);
+      return note?.isLocked ?? false;
+    });
+
+    if (hasLockedNotes) {
+      await showDialog(
+        context: context,
+        builder: (context) {
+          return Dialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.noteLockedTitle,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    count == 1
+                        ? l10n.noteLockedMessage
+                        : l10n.noteLockedDeleteMultiple,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 24),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: Text(l10n.ok),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+      return;
+    }
+
     final isSingle = count == 1;
     final confirmed = await showDialog<bool>(
       context: context,

@@ -32,5 +32,11 @@
   "addMedia": "Adicionar Mídia",
   "takePicture": "Tirar uma foto",
   "uploadFile": "Enviar uma foto ou arquivo",
-  "photoAddedSuccess": "Foto adicionada com sucesso"
+  "photoAddedSuccess": "Foto adicionada com sucesso",
+  "noteLockedTitle": "Nota Bloqueada",
+  "noteLockedMessage": "A nota está bloqueada. Desbloqueie para fazer alterações.",
+  "noteLockedDeleteMultiple": "Não é possível excluir notas. Uma ou mais notas estão bloqueadas.",
+  "noteLocked": "Nota bloqueada",
+  "noteUnlocked": "Nota desbloqueada",
+  "ok": "OK"
 }

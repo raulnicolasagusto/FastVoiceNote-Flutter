@@ -9,6 +9,7 @@ class Note {
   final bool hasVoice;
   String? folderId;
   final bool isPinned;
+  final bool isLocked;
 
   Note({
     required this.id,
@@ -21,6 +22,7 @@ class Note {
     this.hasVoice = false,
     this.folderId,
     this.isPinned = false,
+    this.isLocked = false,
   });
 
   Note copyWith({
@@ -34,6 +36,7 @@ class Note {
     bool? hasVoice,
     String? folderId,
     bool? isPinned,
+    bool? isLocked,
   }) {
     return Note(
       id: id ?? this.id,
@@ -46,6 +49,7 @@ class Note {
       hasVoice: hasVoice ?? this.hasVoice,
       folderId: folderId ?? this.folderId,
       isPinned: isPinned ?? this.isPinned,
+      isLocked: isLocked ?? this.isLocked,
     );
   }
 
@@ -61,6 +65,7 @@ class Note {
       hasVoice: entity.hasVoice,
       folderId: entity.folderId,
       isPinned: entity.isPinned,
+      isLocked: entity.isLocked,
     );
   }
 }

@@ -32,5 +32,11 @@
   "addMedia": "Add Media",
   "takePicture": "Take a picture",
   "uploadFile": "Upload a picture or file",
-  "photoAddedSuccess": "Photo added successfully"
+  "photoAddedSuccess": "Photo added successfully",
+  "noteLockedTitle": "Note Locked",
+  "noteLockedMessage": "The note is locked. Unlock it to make changes.",
+  "noteLockedDeleteMultiple": "Cannot delete notes. One or more notes are locked.",
+  "noteLocked": "Note locked",
+  "noteUnlocked": "Note unlocked",
+  "ok": "OK"
 }

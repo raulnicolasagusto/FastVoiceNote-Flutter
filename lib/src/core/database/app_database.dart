@@ -19,6 +19,7 @@ class Notes extends Table {
   BoolColumn get hasVoice => boolean().withDefault(const Constant(false))();
   TextColumn get folderId => text().nullable().withDefault(const Constant(null))();
   BoolColumn get isPinned => boolean().withDefault(const Constant(false))();
+  BoolColumn get isLocked => boolean().withDefault(const Constant(false))();
 
   @override
   Set<Column> get primaryKey => {id};
@@ -42,7 +43,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -69,6 +70,14 @@ class AppDatabase extends _$AppDatabase {
         // Add fileName column to attachments in version 6
         try {
           await m.addColumn(attachments, attachments.fileName);
+        } catch (e) {
+          // Column might already exist, ignore
+        }
+      }
+      if (from < 7) {
+        // Add isLocked column to notes in version 7
+        try {
+          await m.addColumn(notes, notes.isLocked as GeneratedColumn);
         } catch (e) {
           // Column might already exist, ignore
         }
@@ -101,7 +110,7 @@ class AppDatabase extends _$AppDatabase {
 LazyDatabase _openConnection() {
   return LazyDatabase(() async {
     final dbFolder = await getApplicationDocumentsDirectory();
-    final file = File(p.join(dbFolder.path, 'notes_v6.sqlite'));
+    final file = File(p.join(dbFolder.path, 'notes_v7.sqlite'));
     return NativeDatabase.createInBackground(file);
   });
 }
