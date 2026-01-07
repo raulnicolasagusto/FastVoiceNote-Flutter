@@ -54,6 +54,18 @@ class ShareService {
         throw Exception('Failed to capture image');
       }
 
+      // Show preview dialog
+      if (context.mounted) {
+        final shouldShare = await showDialog<bool>(
+          context: context,
+          builder: (context) => _ImagePreviewDialog(imageBytes: imageBytes),
+        );
+
+        if (shouldShare != true) {
+          return; // User cancelled
+        }
+      }
+
       // Save to temporary file
       final tempDir = await getTemporaryDirectory();
       final timestamp = DateTime.now().millisecondsSinceEpoch;
@@ -93,5 +105,72 @@ class ShareService {
       debugPrint('Error sharing note as text: $e');
       rethrow;
     }
+  }
+}
+
+class _ImagePreviewDialog extends StatelessWidget {
+  final Uint8List imageBytes;
+
+  const _ImagePreviewDialog({required this.imageBytes});
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Preview image
+          Flexible(
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: InteractiveViewer(
+                  minScale: 0.5,
+                  maxScale: 4.0,
+                  child: Image.memory(
+                    imageBytes,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Action buttons
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ElevatedButton.icon(
+                onPressed: () => Navigator.of(context).pop(false),
+                icon: const Icon(Icons.close),
+                label: const Text('Cancel'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.grey[800],
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                ),
+              ),
+              const SizedBox(width: 16),
+              ElevatedButton.icon(
+                onPressed: () => Navigator.of(context).pop(true),
+                icon: const Icon(Icons.share),
+                label: const Text('Share'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 }

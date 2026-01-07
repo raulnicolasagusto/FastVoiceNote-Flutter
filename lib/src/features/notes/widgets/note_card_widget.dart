@@ -28,99 +28,109 @@ class NoteCardWidget extends StatelessWidget {
     return Container(
       color: const Color(0xFFF5F1E8), // Beige background
       padding: const EdgeInsets.all(40),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Note card with decorative border
-          Container(
-            decoration: BoxDecoration(
-              color: noteColor,
-              border: Border.all(
-                color: const Color(0xFFB8A68D), // Border color
-                width: 2,
-              ),
+      child: Center(
+        child: IntrinsicWidth(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              minWidth: 300,
+              maxWidth: 600,
             ),
-            child: Stack(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                // Corner decorations
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  child: _CornerDecoration(),
-                ),
-                Positioned(
-                  top: 0,
-                  right: 0,
-                  child: Transform.rotate(
-                    angle: 1.5708, // 90 degrees
-                    child: _CornerDecoration(),
+                // Note card with decorative border
+                Container(
+                  decoration: BoxDecoration(
+                    color: noteColor,
+                    border: Border.all(
+                      color: const Color(0xFFB8A68D), // Border color
+                      width: 2,
+                    ),
                   ),
-                ),
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  child: Transform.rotate(
-                    angle: -1.5708, // -90 degrees
-                    child: _CornerDecoration(),
-                  ),
-                ),
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: Transform.rotate(
-                    angle: 3.14159, // 180 degrees
-                    child: _CornerDecoration(),
-                  ),
-                ),
-                // Content
-                Padding(
-                  padding: const EdgeInsets.all(40),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Stack(
                     children: [
-                      // Title
-                      if (title.isNotEmpty) ...[
-                        Text(
-                          title,
-                          style: GoogleFonts.inter(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w700,
-                            color: textColor,
-                          ),
+                      // Corner decorations
+                      Positioned(
+                        top: 0,
+                        left: 0,
+                        child: _CornerDecoration(),
+                      ),
+                      Positioned(
+                        top: 0,
+                        right: 0,
+                        child: Transform.rotate(
+                          angle: 1.5708, // 90 degrees
+                          child: _CornerDecoration(),
                         ),
-                        const SizedBox(height: 24),
-                      ],
+                      ),
+                      Positioned(
+                        bottom: 0,
+                        left: 0,
+                        child: Transform.rotate(
+                          angle: -1.5708, // -90 degrees
+                          child: _CornerDecoration(),
+                        ),
+                      ),
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: Transform.rotate(
+                          angle: 3.14159, // 180 degrees
+                          child: _CornerDecoration(),
+                        ),
+                      ),
                       // Content
-                      if (hasChecklist)
-                        _buildChecklistContent(textColor)
-                      else
-                        Text(
-                          content,
-                          style: GoogleFonts.inter(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w400,
-                            color: textColor,
-                            height: 1.5,
-                          ),
+                      Padding(
+                        padding: const EdgeInsets.all(40),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Title
+                            if (title.isNotEmpty) ...[
+                              Text(
+                                title,
+                                style: GoogleFonts.inter(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w700,
+                                  color: textColor,
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+                            ],
+                            // Content
+                            if (hasChecklist)
+                              _buildChecklistContent(textColor)
+                            else
+                              Text(
+                                content,
+                                style: GoogleFonts.inter(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w400,
+                                  color: textColor,
+                                  height: 1.5,
+                                ),
+                              ),
+                          ],
                         ),
+                      ),
                     ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+                // "Created with Fast Voice Note" footer
+                Text(
+                  l10n.createdWithNotes,
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                    color: const Color(0xFF9E9E9E),
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 24),
-          // "Created with Notes" footer
-          Text(
-            l10n.createdWithNotes,
-            style: GoogleFonts.inter(
-              fontSize: 14,
-              fontWeight: FontWeight.w400,
-              color: const Color(0xFF9E9E9E),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
