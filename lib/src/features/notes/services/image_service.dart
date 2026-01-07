@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
 
@@ -44,6 +45,58 @@ class ImageService {
       print('Error picking image: $e');
       return null;
     }
+  }
+
+  /// Pick a file (PDF, DOC, etc.)
+  Future<Map<String, String>?> pickFile() async {
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.any,
+        allowMultiple: false,
+      );
+
+      if (result == null || result.files.isEmpty) return null;
+
+      final file = result.files.first;
+      final filePath = file.path;
+
+      if (filePath == null) return null;
+
+      // Save the file to app directory
+      final savedPath = await _saveFile(File(filePath), file.name);
+      
+      return {
+        'path': savedPath,
+        'name': file.name,
+        'extension': file.extension ?? '',
+      };
+    } catch (e) {
+      print('Error picking file: $e');
+      return null;
+    }
+  }
+
+  /// Save file to app's documents directory
+  Future<String> _saveFile(File file, String originalName) async {
+    final appDir = await getApplicationDocumentsDirectory();
+    final filesDir = Directory(path.join(appDir.path, 'files'));
+    
+    // Create files directory if it doesn't exist
+    if (!await filesDir.exists()) {
+      await filesDir.create(recursive: true);
+    }
+
+    // Generate unique filename with timestamp
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final extension = path.extension(originalName);
+    final baseName = path.basenameWithoutExtension(originalName);
+    final fileName = '${timestamp}_$baseName$extension';
+    final savedPath = path.join(filesDir.path, fileName);
+
+    // Copy the file to the app directory
+    await file.copy(savedPath);
+
+    return savedPath;
   }
 
   /// Save image to app's documents directory

@@ -148,9 +148,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
       context: context,
       builder: (context) => PhotoOptionsDialog(
         onTakePhoto: _takePicture,
-        onUploadFile: () {
-          // TODO: Implement upload file functionality
-        },
+        onUploadFile: _uploadFile,
       ),
     );
   }
@@ -178,6 +176,75 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
             duration: const Duration(seconds: 2),
           ),
         );
+      }
+    }
+  }
+
+  Future<void> _uploadFile() async {
+    // Show options to pick image or file
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Select type'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.image),
+              title: const Text('Image'),
+              onTap: () => Navigator.pop(context, 'image'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.insert_drive_file),
+              title: const Text('File'),
+              onTap: () => Navigator.pop(context, 'file'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (result == null) return;
+
+    if (result == 'image') {
+      final imagePath = await _imageService.pickImage();
+      if (imagePath != null) {
+        await context.read<NotesProvider>().addAttachment(
+          widget.noteId,
+          imagePath,
+          'image',
+        );
+        await _loadAttachments();
+        
+        if (mounted) {
+          final l10n = AppLocalizations.of(context)!;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(l10n.photoAddedSuccess),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    } else {
+      final fileData = await _imageService.pickFile();
+      if (fileData != null) {
+        await context.read<NotesProvider>().addAttachment(
+          widget.noteId,
+          fileData['path']!,
+          'file',
+          fileName: fileData['name'],
+        );
+        await _loadAttachments();
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('File added successfully'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
       }
     }
   }
@@ -835,22 +902,35 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                       },
                     ),
 
-                    // Images Gallery
+                    // Attachments Gallery
                     if (_attachments.isNotEmpty) ...[
                       const SizedBox(height: 24),
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
                         children: _attachments.map((attachment) {
-                          return _ImageThumbnail(
-                            imagePath: attachment.filePath,
-                            textColor: textColor,
-                            onDelete: () async {
-                              await context.read<NotesProvider>().deleteAttachment(attachment.id);
-                              await _imageService.deleteImage(attachment.filePath);
-                              await _loadAttachments();
-                            },
-                          );
+                          if (attachment.type == 'image') {
+                            return _ImageThumbnail(
+                              imagePath: attachment.filePath,
+                              textColor: textColor,
+                              onDelete: () async {
+                                await context.read<NotesProvider>().deleteAttachment(attachment.id);
+                                await _imageService.deleteImage(attachment.filePath);
+                                await _loadAttachments();
+                              },
+                            );
+                          } else {
+                            return _FileThumbnail(
+                              filePath: attachment.filePath,
+                              fileName: attachment.fileName ?? 'Unknown',
+                              textColor: textColor,
+                              onDelete: () async {
+                                await context.read<NotesProvider>().deleteAttachment(attachment.id);
+                                await _imageService.deleteImage(attachment.filePath);
+                                await _loadAttachments();
+                              },
+                            );
+                          }
                         }).toList(),
                       ),
                     ],
@@ -904,6 +984,124 @@ class _ImageThumbnail extends StatelessWidget {
                 shape: BoxShape.circle,
               ),
               child: Icon(
+                Icons.close,
+                size: 16,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _FileThumbnail extends StatelessWidget {
+  final String filePath;
+  final String fileName;
+  final Color textColor;
+  final VoidCallback onDelete;
+
+  const _FileThumbnail({
+    required this.filePath,
+    required this.fileName,
+    required this.textColor,
+    required this.onDelete,
+  });
+
+  IconData _getFileIcon(String fileName) {
+    final extension = fileName.split('.').last.toLowerCase();
+    switch (extension) {
+      case 'pdf':
+        return Icons.picture_as_pdf;
+      case 'doc':
+      case 'docx':
+        return Icons.description;
+      case 'xls':
+      case 'xlsx':
+        return Icons.table_chart;
+      case 'ppt':
+      case 'pptx':
+        return Icons.slideshow;
+      case 'txt':
+        return Icons.text_snippet;
+      case 'zip':
+      case 'rar':
+        return Icons.folder_zip;
+      default:
+        return Icons.insert_drive_file;
+    }
+  }
+
+  Color _getFileColor(String fileName) {
+    final extension = fileName.split('.').last.toLowerCase();
+    switch (extension) {
+      case 'pdf':
+        return Colors.red.shade600;
+      case 'doc':
+      case 'docx':
+        return Colors.blue.shade700;
+      case 'xls':
+      case 'xlsx':
+        return Colors.green.shade700;
+      case 'ppt':
+      case 'pptx':
+        return Colors.orange.shade700;
+      default:
+        return Colors.grey.shade700;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        Container(
+          width: 150,
+          height: 150,
+          decoration: BoxDecoration(
+            color: Colors.grey.shade200,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.grey.shade300),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                _getFileIcon(fileName),
+                size: 48,
+                color: _getFileColor(fileName),
+              ),
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Text(
+                  fileName,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey.shade800,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Positioned(
+          top: 4,
+          right: 4,
+          child: GestureDetector(
+            onTap: onDelete,
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: Colors.black54,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
                 Icons.close,
                 size: 16,
                 color: Colors.white,

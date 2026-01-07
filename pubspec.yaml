@@ -49,6 +49,7 @@ dependencies:
   record: ^6.1.2
   permission_handler: ^11.1.0
   image_picker: ^1.1.2
+  file_picker: ^8.1.6
 
 dev_dependencies:
   flutter_test:

@@ -30,6 +30,7 @@ class Attachments extends Table {
   TextColumn get noteId => text()();
   TextColumn get filePath => text()();
   TextColumn get type => text()(); // 'image', 'file'
+  TextColumn get fileName => text().nullable()(); // Original filename for files
   DateTimeColumn get createdAt => dateTime()();
 
   @override
@@ -41,7 +42,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -63,6 +64,14 @@ class AppDatabase extends _$AppDatabase {
       if (from < 5) {
         // Create attachments table in version 5
         await m.createTable(attachments);
+      }
+      if (from < 6) {
+        // Add fileName column to attachments in version 6
+        try {
+          await m.addColumn(attachments, attachments.fileName);
+        } catch (e) {
+          // Column might already exist, ignore
+        }
       }
     },
   );
@@ -92,7 +101,7 @@ class AppDatabase extends _$AppDatabase {
 LazyDatabase _openConnection() {
   return LazyDatabase(() async {
     final dbFolder = await getApplicationDocumentsDirectory();
-    final file = File(p.join(dbFolder.path, 'notes_v5.sqlite'));
+    final file = File(p.join(dbFolder.path, 'notes_v6.sqlite'));
     return NativeDatabase.createInBackground(file);
   });
 }

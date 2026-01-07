@@ -655,6 +655,17 @@ class $AttachmentsTable extends Attachments
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _fileNameMeta = const VerificationMeta(
+    'fileName',
+  );
+  @override
+  late final GeneratedColumn<String> fileName = GeneratedColumn<String>(
+    'file_name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -667,7 +678,14 @@ class $AttachmentsTable extends Attachments
     requiredDuringInsert: true,
   );
   @override
-  List<GeneratedColumn> get $columns => [id, noteId, filePath, type, createdAt];
+  List<GeneratedColumn> get $columns => [
+    id,
+    noteId,
+    filePath,
+    type,
+    fileName,
+    createdAt,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -709,6 +727,12 @@ class $AttachmentsTable extends Attachments
     } else if (isInserting) {
       context.missing(_typeMeta);
     }
+    if (data.containsKey('file_name')) {
+      context.handle(
+        _fileNameMeta,
+        fileName.isAcceptableOrUnknown(data['file_name']!, _fileNameMeta),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -742,6 +766,10 @@ class $AttachmentsTable extends Attachments
         DriftSqlType.string,
         data['${effectivePrefix}type'],
       )!,
+      fileName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}file_name'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -761,12 +789,14 @@ class AttachmentEntity extends DataClass
   final String noteId;
   final String filePath;
   final String type;
+  final String? fileName;
   final DateTime createdAt;
   const AttachmentEntity({
     required this.id,
     required this.noteId,
     required this.filePath,
     required this.type,
+    this.fileName,
     required this.createdAt,
   });
   @override
@@ -776,6 +806,9 @@ class AttachmentEntity extends DataClass
     map['note_id'] = Variable<String>(noteId);
     map['file_path'] = Variable<String>(filePath);
     map['type'] = Variable<String>(type);
+    if (!nullToAbsent || fileName != null) {
+      map['file_name'] = Variable<String>(fileName);
+    }
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
   }
@@ -786,6 +819,9 @@ class AttachmentEntity extends DataClass
       noteId: Value(noteId),
       filePath: Value(filePath),
       type: Value(type),
+      fileName: fileName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(fileName),
       createdAt: Value(createdAt),
     );
   }
@@ -800,6 +836,7 @@ class AttachmentEntity extends DataClass
       noteId: serializer.fromJson<String>(json['noteId']),
       filePath: serializer.fromJson<String>(json['filePath']),
       type: serializer.fromJson<String>(json['type']),
+      fileName: serializer.fromJson<String?>(json['fileName']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
@@ -811,6 +848,7 @@ class AttachmentEntity extends DataClass
       'noteId': serializer.toJson<String>(noteId),
       'filePath': serializer.toJson<String>(filePath),
       'type': serializer.toJson<String>(type),
+      'fileName': serializer.toJson<String?>(fileName),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
   }
@@ -820,12 +858,14 @@ class AttachmentEntity extends DataClass
     String? noteId,
     String? filePath,
     String? type,
+    Value<String?> fileName = const Value.absent(),
     DateTime? createdAt,
   }) => AttachmentEntity(
     id: id ?? this.id,
     noteId: noteId ?? this.noteId,
     filePath: filePath ?? this.filePath,
     type: type ?? this.type,
+    fileName: fileName.present ? fileName.value : this.fileName,
     createdAt: createdAt ?? this.createdAt,
   );
   AttachmentEntity copyWithCompanion(AttachmentsCompanion data) {
@@ -834,6 +874,7 @@ class AttachmentEntity extends DataClass
       noteId: data.noteId.present ? data.noteId.value : this.noteId,
       filePath: data.filePath.present ? data.filePath.value : this.filePath,
       type: data.type.present ? data.type.value : this.type,
+      fileName: data.fileName.present ? data.fileName.value : this.fileName,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
@@ -845,13 +886,15 @@ class AttachmentEntity extends DataClass
           ..write('noteId: $noteId, ')
           ..write('filePath: $filePath, ')
           ..write('type: $type, ')
+          ..write('fileName: $fileName, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, noteId, filePath, type, createdAt);
+  int get hashCode =>
+      Object.hash(id, noteId, filePath, type, fileName, createdAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -860,6 +903,7 @@ class AttachmentEntity extends DataClass
           other.noteId == this.noteId &&
           other.filePath == this.filePath &&
           other.type == this.type &&
+          other.fileName == this.fileName &&
           other.createdAt == this.createdAt);
 }
 
@@ -868,6 +912,7 @@ class AttachmentsCompanion extends UpdateCompanion<AttachmentEntity> {
   final Value<String> noteId;
   final Value<String> filePath;
   final Value<String> type;
+  final Value<String?> fileName;
   final Value<DateTime> createdAt;
   final Value<int> rowid;
   const AttachmentsCompanion({
@@ -875,6 +920,7 @@ class AttachmentsCompanion extends UpdateCompanion<AttachmentEntity> {
     this.noteId = const Value.absent(),
     this.filePath = const Value.absent(),
     this.type = const Value.absent(),
+    this.fileName = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -883,6 +929,7 @@ class AttachmentsCompanion extends UpdateCompanion<AttachmentEntity> {
     required String noteId,
     required String filePath,
     required String type,
+    this.fileName = const Value.absent(),
     required DateTime createdAt,
     this.rowid = const Value.absent(),
   }) : id = Value(id),
@@ -895,6 +942,7 @@ class AttachmentsCompanion extends UpdateCompanion<AttachmentEntity> {
     Expression<String>? noteId,
     Expression<String>? filePath,
     Expression<String>? type,
+    Expression<String>? fileName,
     Expression<DateTime>? createdAt,
     Expression<int>? rowid,
   }) {
@@ -903,6 +951,7 @@ class AttachmentsCompanion extends UpdateCompanion<AttachmentEntity> {
       if (noteId != null) 'note_id': noteId,
       if (filePath != null) 'file_path': filePath,
       if (type != null) 'type': type,
+      if (fileName != null) 'file_name': fileName,
       if (createdAt != null) 'created_at': createdAt,
       if (rowid != null) 'rowid': rowid,
     });
@@ -913,6 +962,7 @@ class AttachmentsCompanion extends UpdateCompanion<AttachmentEntity> {
     Value<String>? noteId,
     Value<String>? filePath,
     Value<String>? type,
+    Value<String?>? fileName,
     Value<DateTime>? createdAt,
     Value<int>? rowid,
   }) {
@@ -921,6 +971,7 @@ class AttachmentsCompanion extends UpdateCompanion<AttachmentEntity> {
       noteId: noteId ?? this.noteId,
       filePath: filePath ?? this.filePath,
       type: type ?? this.type,
+      fileName: fileName ?? this.fileName,
       createdAt: createdAt ?? this.createdAt,
       rowid: rowid ?? this.rowid,
     );
@@ -941,6 +992,9 @@ class AttachmentsCompanion extends UpdateCompanion<AttachmentEntity> {
     if (type.present) {
       map['type'] = Variable<String>(type.value);
     }
+    if (fileName.present) {
+      map['file_name'] = Variable<String>(fileName.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -957,6 +1011,7 @@ class AttachmentsCompanion extends UpdateCompanion<AttachmentEntity> {
           ..write('noteId: $noteId, ')
           ..write('filePath: $filePath, ')
           ..write('type: $type, ')
+          ..write('fileName: $fileName, ')
           ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -1270,6 +1325,7 @@ typedef $$AttachmentsTableCreateCompanionBuilder =
       required String noteId,
       required String filePath,
       required String type,
+      Value<String?> fileName,
       required DateTime createdAt,
       Value<int> rowid,
     });
@@ -1279,6 +1335,7 @@ typedef $$AttachmentsTableUpdateCompanionBuilder =
       Value<String> noteId,
       Value<String> filePath,
       Value<String> type,
+      Value<String?> fileName,
       Value<DateTime> createdAt,
       Value<int> rowid,
     });
@@ -1309,6 +1366,11 @@ class $$AttachmentsTableFilterComposer
 
   ColumnFilters<String> get type => $composableBuilder(
     column: $table.type,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get fileName => $composableBuilder(
+    column: $table.fileName,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -1347,6 +1409,11 @@ class $$AttachmentsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get fileName => $composableBuilder(
+    column: $table.fileName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -1373,6 +1440,9 @@ class $$AttachmentsTableAnnotationComposer
 
   GeneratedColumn<String> get type =>
       $composableBuilder(column: $table.type, builder: (column) => column);
+
+  GeneratedColumn<String> get fileName =>
+      $composableBuilder(column: $table.fileName, builder: (column) => column);
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
@@ -1413,6 +1483,7 @@ class $$AttachmentsTableTableManager
                 Value<String> noteId = const Value.absent(),
                 Value<String> filePath = const Value.absent(),
                 Value<String> type = const Value.absent(),
+                Value<String?> fileName = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => AttachmentsCompanion(
@@ -1420,6 +1491,7 @@ class $$AttachmentsTableTableManager
                 noteId: noteId,
                 filePath: filePath,
                 type: type,
+                fileName: fileName,
                 createdAt: createdAt,
                 rowid: rowid,
               ),
@@ -1429,6 +1501,7 @@ class $$AttachmentsTableTableManager
                 required String noteId,
                 required String filePath,
                 required String type,
+                Value<String?> fileName = const Value.absent(),
                 required DateTime createdAt,
                 Value<int> rowid = const Value.absent(),
               }) => AttachmentsCompanion.insert(
@@ -1436,6 +1509,7 @@ class $$AttachmentsTableTableManager
                 noteId: noteId,
                 filePath: filePath,
                 type: type,
+                fileName: fileName,
                 createdAt: createdAt,
                 rowid: rowid,
               ),

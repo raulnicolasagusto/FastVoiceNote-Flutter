@@ -109,12 +109,13 @@ class NotesProvider extends ChangeNotifier {
   }
 
   // Attachments operations
-  Future<void> addAttachment(String noteId, String filePath, String type) async {
+  Future<void> addAttachment(String noteId, String filePath, String type, {String? fileName}) async {
     final attachment = AttachmentEntity(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       noteId: noteId,
       filePath: filePath,
       type: type,
+      fileName: fileName,
       createdAt: DateTime.now(),
     );
     
