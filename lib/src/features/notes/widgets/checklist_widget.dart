@@ -180,7 +180,8 @@ class _ChecklistWidgetState extends State<ChecklistWidget> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    // Get text color from the Theme (which is set based on note background)
+    final textColor = Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black87;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -197,7 +198,7 @@ class _ChecklistWidgetState extends State<ChecklistWidget> {
             controller: controller,
             focusNode: focusNode,
             isEditing: _isEditing,
-            isDark: isDark,
+            textColor: textColor,
             onTap: () => _onItemTap(item.id),
             onCheckChanged: () => _toggleCheck(item.id),
             onTextChanged: (text) => _updateItemText(item.id, text),
@@ -254,7 +255,7 @@ class _ChecklistItemWidget extends StatefulWidget {
   final TextEditingController controller;
   final FocusNode focusNode;
   final bool isEditing;
-  final bool isDark;
+  final Color textColor;
   final VoidCallback onTap;
   final VoidCallback onCheckChanged;
   final Function(String) onTextChanged;
@@ -267,7 +268,7 @@ class _ChecklistItemWidget extends StatefulWidget {
     required this.controller,
     required this.focusNode,
     required this.isEditing,
-    required this.isDark,
+    required this.textColor,
     required this.onTap,
     required this.onCheckChanged,
     required this.onTextChanged,
@@ -285,7 +286,7 @@ class _ChecklistItemWidgetState extends State<_ChecklistItemWidget> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final textColor = widget.isDark ? colors.onSurface : Colors.black87;
+    final textColor = widget.textColor;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),

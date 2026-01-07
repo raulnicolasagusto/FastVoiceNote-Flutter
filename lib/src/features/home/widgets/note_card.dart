@@ -25,6 +25,15 @@ class NoteCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Determine text color based on background luminance
+    final textColor = color.computeLuminance() > 0.5 ? Colors.black87 : Colors.white;
+    final subtitleColor = color.computeLuminance() > 0.5 
+        ? Colors.grey[700]! 
+        : Colors.white.withValues(alpha: 0.7);
+    final iconColor = color.computeLuminance() > 0.5 
+        ? Colors.grey[600]! 
+        : Colors.white.withValues(alpha: 0.8);
+    
     return Stack(
       children: [
         Card(
@@ -44,12 +53,13 @@ class NoteCard extends StatelessWidget {
                         title,
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.bold,
+                              color: textColor,
                             ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    Icon(Icons.edit, size: 16, color: Colors.grey[600]),
+                    Icon(Icons.edit, size: 16, color: iconColor),
                   ],
                 ),
                 const SizedBox(height: 4),
@@ -57,14 +67,14 @@ class NoteCard extends StatelessWidget {
                   DateFormat('dd/MM/yyyy').format(date),
                   style: Theme.of(
                     context,
-                  ).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
+                  ).textTheme.bodySmall?.copyWith(color: subtitleColor),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   content,
                   style: Theme.of(
                     context,
-                  ).textTheme.bodyMedium?.copyWith(color: Colors.grey[800]),
+                  ).textTheme.bodyMedium?.copyWith(color: textColor),
                   maxLines: 6,
                   overflow: TextOverflow.ellipsis,
                 ),

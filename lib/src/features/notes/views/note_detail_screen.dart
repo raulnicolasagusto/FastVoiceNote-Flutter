@@ -8,6 +8,7 @@ import '../../transcription/utils/voice_add_to_note_processor.dart';
 import '../providers/notes_provider.dart';
 import '../widgets/note_options_dialog.dart';
 import '../widgets/checklist_widget.dart';
+import '../widgets/color_picker_modal.dart';
 import '../models/checklist_item.dart';
 import '../models/checklist_utils.dart';
 import '../models/note.dart';
@@ -314,6 +315,24 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
     }
   }
 
+  void _showColorPicker() {
+    final note = context.read<NotesProvider>().getNoteById(widget.noteId);
+    if (note == null) return;
+
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => ColorPickerModal(
+        currentColor: note.color,
+        onColorSelected: (color) async {
+          await context.read<NotesProvider>().updateNote(
+            widget.noteId,
+            color: color,
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final note = context.watch<NotesProvider>().getNoteById(widget.noteId);
@@ -333,12 +352,40 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
       _contentController.text = currentText;
     }
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Top Action Bar
+    // Get note color
+    final noteColor = Color(int.parse('0x${note.color}'));
+    // Determine text color based on background luminance (NOT theme mode)
+    final textColor = noteColor.computeLuminance() > 0.5 ? Colors.black87 : Colors.white;
+    // Determine icon color
+    final iconColor = noteColor.computeLuminance() > 0.5 ? Colors.black87 : Colors.white;
+    // Determine hint/secondary color
+    final hintColor = noteColor.computeLuminance() > 0.5 
+        ? Colors.black54 
+        : Colors.white.withValues(alpha: 0.6);
+
+    return Theme(
+      data: Theme.of(context).copyWith(
+        iconTheme: IconThemeData(color: iconColor),
+        textTheme: Theme.of(context).textTheme.apply(
+          bodyColor: textColor,
+          displayColor: textColor,
+          decorationColor: textColor,
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          hintStyle: TextStyle(color: hintColor),
+        ),
+        textSelectionTheme: TextSelectionThemeData(
+          cursorColor: textColor,
+          selectionColor: textColor.withValues(alpha: 0.3),
+          selectionHandleColor: textColor,
+        ),
+      ),
+      child: Scaffold(
+        backgroundColor: noteColor,
+        body: SafeArea(
+          child: Column(
+            children: [
+              // Top Action Bar
             Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: 4.0,
@@ -369,7 +416,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                   ),
                   IconButton(
                     icon: const Icon(Icons.palette_outlined),
-                    onPressed: () {},
+                    onPressed: _showColorPicker,
                   ),
                   const Spacer(),
                   Builder(
@@ -421,14 +468,14 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                         DateFormat('MMM d, yyyy').format(note.updatedAt),
                         style: Theme.of(
                           context,
-                        ).textTheme.bodySmall?.copyWith(color: Colors.grey),
+                        ).textTheme.bodySmall?.copyWith(color: hintColor),
                       ),
                       const SizedBox(width: 16),
                       Text(
                         '$charCount chars',
                         style: Theme.of(
                           context,
-                        ).textTheme.bodySmall?.copyWith(color: Colors.grey),
+                        ).textTheme.bodySmall?.copyWith(color: hintColor),
                       ),
                       if (!hasChecklist) ...[
                         const Spacer(),
@@ -436,7 +483,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                           'Toca para editar',
                           style: Theme.of(
                             context,
-                          ).textTheme.bodySmall?.copyWith(color: Colors.grey),
+                          ).textTheme.bodySmall?.copyWith(color: hintColor),
                         ),
                       ],
                     ],
@@ -461,19 +508,24 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                           ? TextField(
                               controller: _titleController,
                               autofocus: true,
-                              style: Theme.of(context).textTheme.headlineSmall
-                                  ?.copyWith(fontWeight: FontWeight.bold),
-                              decoration: const InputDecoration(
+                              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: textColor,
+                              ),
+                              decoration: InputDecoration(
                                 border: InputBorder.none,
                                 hintText: 'Title',
+                                hintStyle: TextStyle(color: hintColor),
                               ),
                               onSubmitted: (_) => _saveTitle(),
                               onTapOutside: (_) => _saveTitle(),
                             )
                           : Text(
                               note.title,
-                              style: Theme.of(context).textTheme.headlineSmall
-                                  ?.copyWith(fontWeight: FontWeight.bold),
+                              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: textColor,
+                              ),
                             ),
                     ),
 
@@ -499,10 +551,13 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                                       controller: _contentController,
                                       autofocus: true,
                                       maxLines: null,
-                                      style: Theme.of(context).textTheme.bodyLarge,
-                                      decoration: const InputDecoration(
+                                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                        color: textColor,
+                                      ),
+                                      decoration: InputDecoration(
                                         border: InputBorder.none,
                                         hintText: 'Note',
+                                        hintStyle: TextStyle(color: hintColor),
                                       ),
                                       onTapOutside: (_) => _saveContent(),
                                       onSubmitted: (_) => _saveContent(),
@@ -512,12 +567,9 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                                           textContent.isEmpty
                                               ? 'Toca para agregar contenido'
                                               : textContent,
-                                          style: Theme.of(context).textTheme.bodyLarge
-                                              ?.copyWith(
-                                                color: textContent.isEmpty
-                                                    ? Colors.grey
-                                                    : null,
-                                              ),
+                                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                            color: textContent.isEmpty ? hintColor : textColor,
+                                          ),
                                         )
                                       : const SizedBox.shrink(),
                             ),
@@ -545,6 +597,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
           ],
         ),
       ),
+    ),
     );
   }
 }

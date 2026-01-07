@@ -42,7 +42,7 @@ class NotesProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> updateNote(String id, {String? title, String? content, String? folderId, bool replaceFolderId = false, bool? isPinned}) async {
+  Future<void> updateNote(String id, {String? title, String? content, String? folderId, bool replaceFolderId = false, bool? isPinned, String? color}) async {
     final note = getNoteById(id);
     if (note != null) {
       // Si replaceFolderId es true, cambiar folderId aunque sea null
@@ -53,6 +53,7 @@ class NotesProvider extends ChangeNotifier {
         content: content,
         folderId: newFolderId,
         isPinned: isPinned,
+        color: color,
         updatedAt: DateTime.now(),
       );
 
