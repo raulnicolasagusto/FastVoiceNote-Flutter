@@ -31,6 +31,12 @@ class _HomeScreenState extends State<HomeScreen>
   bool _isFabExpanded = false;
   final Set<String> _selectedNotes = {};
   bool _foldersLoaded = false;
+  
+  // Search state
+  bool _isSearching = false;
+  final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -73,6 +79,8 @@ class _HomeScreenState extends State<HomeScreen>
   void dispose() {
     _animationController.dispose();
     _tabController.dispose();
+    _searchController.dispose();
+    _searchFocusNode.dispose();
     super.dispose();
   }
 
@@ -105,10 +113,47 @@ class _HomeScreenState extends State<HomeScreen>
     });
   }
 
+  void _toggleSearch() {
+    setState(() {
+      _isSearching = !_isSearching;
+      if (_isSearching) {
+        _searchFocusNode.requestFocus();
+      } else {
+        _searchController.clear();
+        _searchQuery = '';
+        _searchFocusNode.unfocus();
+      }
+    });
+  }
+
+  void _onSearchChanged(String query) {
+    setState(() {
+      _searchQuery = query.toLowerCase();
+    });
+  }
+
   List<Note> _getFilteredNotes(List<Note> allNotes, String? folderId) {
     List<Note> filtered = folderId == null
         ? List.from(allNotes)
         : allNotes.where((note) => note.folderId == folderId).toList();
+
+    // Apply search filter
+    if (_searchQuery.isNotEmpty) {
+      filtered = filtered.where((note) {
+        // Search in title
+        if (note.title.toLowerCase().contains(_searchQuery)) return true;
+        
+        // Search in content (including checklist items)
+        final content = ChecklistUtils.getPreview(note.content).toLowerCase();
+        if (content.contains(_searchQuery)) return true;
+        
+        // Search in date
+        final dateStr = DateFormat('dd/MM/yyyy').format(note.updatedAt).toLowerCase();
+        if (dateStr.contains(_searchQuery)) return true;
+        
+        return false;
+      }).toList();
+    }
 
     // Sort: pinned first, then by updatedAt (newest first)
     filtered.sort((a, b) {
@@ -577,10 +622,28 @@ class _HomeScreenState extends State<HomeScreen>
                       '${_selectedNotes.length} ${l10n.deleteMultipleTitle}',
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     )
-                  : Text(
-                      l10n.notesTitle,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
+                  : _isSearching
+                      ? TextField(
+                          controller: _searchController,
+                          focusNode: _searchFocusNode,
+                          onChanged: _onSearchChanged,
+                          decoration: InputDecoration(
+                            hintText: 'Search notes...',
+                            border: InputBorder.none,
+                            hintStyle: TextStyle(
+                              color: Colors.grey[400],
+                              fontWeight: FontWeight.normal,
+                            ),
+                          ),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 20,
+                          ),
+                        )
+                      : Text(
+                          l10n.notesTitle,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
               centerTitle: false,
               floating: true,
               snap: true,
@@ -601,17 +664,22 @@ class _HomeScreenState extends State<HomeScreen>
                     onPressed: _confirmDelete,
                   ),
                 ] else ...[
+                  if (!_isSearching)
+                    IconButton(
+                      icon: const Icon(Icons.create_new_folder_outlined),
+                      onPressed: _showCreateFolderModal,
+                    ),
                   IconButton(
-                    icon: const Icon(Icons.create_new_folder_outlined),
-                    onPressed: _showCreateFolderModal,
+                    icon: Icon(_isSearching ? Icons.close : Icons.search),
+                    onPressed: _toggleSearch,
                   ),
-                  IconButton(icon: const Icon(Icons.search), onPressed: () {}),
-                  IconButton(
-                    icon: const Icon(Icons.menu),
-                    onPressed: () {
-                      _scaffoldKey.currentState?.openDrawer();
-                    },
-                  ),
+                  if (!_isSearching)
+                    IconButton(
+                      icon: const Icon(Icons.menu),
+                      onPressed: () {
+                        _scaffoldKey.currentState?.openDrawer();
+                      },
+                    ),
                 ],
               ],
               bottom: TabBar(
