@@ -28,5 +28,9 @@
   "deleteSingleTitle": "Delete note",
   "deleteSingleMessage": "Are you sure you want to delete this note?",
   "deleteMultipleTitle": "Delete notes",
-  "deleteMultipleMessage": "Delete {count} selected notes?"
+  "deleteMultipleMessage": "Delete {count} selected notes?",
+  "addMedia": "Add Media",
+  "takePicture": "Take a picture",
+  "uploadFile": "Upload a picture or file",
+  "photoAddedSuccess": "Photo added successfully"
 }

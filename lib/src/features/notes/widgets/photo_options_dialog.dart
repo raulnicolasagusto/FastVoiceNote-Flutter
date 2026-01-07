@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../core/l10n/generated/app_localizations.dart';
 
 class PhotoOptionsDialog extends StatelessWidget {
   final VoidCallback? onTakePhoto;
@@ -13,6 +14,7 @@ class PhotoOptionsDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -29,7 +31,7 @@ class PhotoOptionsDialog extends StatelessWidget {
           children: [
             // Title
             Text(
-              'Add Media',
+              l10n.addMedia,
               style: GoogleFonts.inter(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -40,7 +42,7 @@ class PhotoOptionsDialog extends StatelessWidget {
             // Options List
             _OptionItem(
               icon: Icons.camera_alt,
-              label: 'Take a picture',
+              label: l10n.takePicture,
               isDark: isDark,
               onTap: () {
                 Navigator.of(context).pop();
@@ -50,7 +52,7 @@ class PhotoOptionsDialog extends StatelessWidget {
             const SizedBox(height: 16),
             _OptionItem(
               icon: Icons.upload_file,
-              label: 'Upload a picture or file',
+              label: l10n.uploadFile,
               isDark: isDark,
               onTap: () {
                 Navigator.of(context).pop();

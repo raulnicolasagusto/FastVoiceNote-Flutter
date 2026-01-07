@@ -28,5 +28,9 @@
   "deleteSingleTitle": "Excluir nota",
   "deleteSingleMessage": "Tem certeza de que deseja excluir esta nota?",
   "deleteMultipleTitle": "Excluir notas",
-  "deleteMultipleMessage": "Excluir {count} notas selecionadas?"
+  "deleteMultipleMessage": "Excluir {count} notas selecionadas?",
+  "addMedia": "Adicionar Mídia",
+  "takePicture": "Tirar uma foto",
+  "uploadFile": "Enviar uma foto ou arquivo",
+  "photoAddedSuccess": "Foto adicionada com sucesso"
 }

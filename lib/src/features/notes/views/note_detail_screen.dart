@@ -171,10 +171,11 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
       
       // Show success feedback
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Photo added successfully'),
-            duration: Duration(seconds: 2),
+          SnackBar(
+            content: Text(l10n.photoAddedSuccess),
+            duration: const Duration(seconds: 2),
           ),
         );
       }
