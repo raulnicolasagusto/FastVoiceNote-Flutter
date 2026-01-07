@@ -298,6 +298,8 @@ class _ChecklistItemWidgetState extends State<_ChecklistItemWidget> {
             value: widget.item.isChecked,
             onChanged: widget.isEditing ? null : (value) => widget.onCheckChanged(),
             activeColor: colors.primary,
+            checkColor: Colors.white,
+            side: BorderSide(color: textColor, width: 2),
           ),
           const SizedBox(width: 8),
           // Text field or text
