@@ -42,7 +42,7 @@ class NotesProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> updateNote(String id, {String? title, String? content, String? folderId, bool replaceFolderId = false, bool? isPinned, String? color}) async {
+  Future<void> updateNote(String id, {String? title, String? content, String? folderId, bool replaceFolderId = false, bool? isPinned, String? color, bool? hasImage}) async {
     final note = getNoteById(id);
     if (note != null) {
       // Si replaceFolderId es true, cambiar folderId aunque sea null
@@ -54,6 +54,7 @@ class NotesProvider extends ChangeNotifier {
         folderId: newFolderId,
         isPinned: isPinned,
         color: color,
+        hasImage: hasImage,
         updatedAt: DateTime.now(),
       );
 
@@ -105,5 +106,34 @@ class NotesProvider extends ChangeNotifier {
     for (final noteId in noteIds) {
       await _database.updateNoteFolderId(noteId, folderId);
     }
+  }
+
+  // Attachments operations
+  Future<void> addAttachment(String noteId, String filePath, String type) async {
+    final attachment = AttachmentEntity(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      noteId: noteId,
+      filePath: filePath,
+      type: type,
+      createdAt: DateTime.now(),
+    );
+    
+    await _database.insertAttachment(attachment);
+    
+    // Update note's hasImage flag
+    if (type == 'image') {
+      final note = getNoteById(noteId);
+      if (note != null) {
+        await updateNote(noteId, hasImage: true);
+      }
+    }
+  }
+
+  Future<List<AttachmentEntity>> getAttachments(String noteId) async {
+    return await _database.getAttachmentsForNote(noteId);
+  }
+
+  Future<void> deleteAttachment(String attachmentId) async {
+    await _database.deleteAttachment(attachmentId);
   }
 }

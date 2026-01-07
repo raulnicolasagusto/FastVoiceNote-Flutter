@@ -24,12 +24,24 @@ class Notes extends Table {
   Set<Column> get primaryKey => {id};
 }
 
-@DriftDatabase(tables: [Notes])
+@DataClassName('AttachmentEntity')
+class Attachments extends Table {
+  TextColumn get id => text()();
+  TextColumn get noteId => text()();
+  TextColumn get filePath => text()();
+  TextColumn get type => text()(); // 'image', 'file'
+  DateTimeColumn get createdAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+@DriftDatabase(tables: [Notes, Attachments])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -48,9 +60,14 @@ class AppDatabase extends _$AppDatabase {
           // Column might already exist, ignore
         }
       }
+      if (from < 5) {
+        // Create attachments table in version 5
+        await m.createTable(attachments);
+      }
     },
   );
 
+  // Notes operations
   Future<void> insertNote(NoteEntity note) => into(notes).insert(note);
   Future<void> updateNoteData(NoteEntity note) => update(notes).replace(note);
   Future<void> updateNoteFolderId(String id, String? folderId) =>
@@ -60,12 +77,22 @@ class AppDatabase extends _$AppDatabase {
   Stream<List<NoteEntity>> watchAllNotes() => select(notes).watch();
   Future<NoteEntity?> getNoteById(String id) =>
       (select(notes)..where((t) => t.id.equals(id))).getSingleOrNull();
+
+  // Attachments operations
+  Future<void> insertAttachment(AttachmentEntity attachment) => 
+      into(attachments).insert(attachment);
+  Future<List<AttachmentEntity>> getAttachmentsForNote(String noteId) =>
+      (select(attachments)..where((t) => t.noteId.equals(noteId))).get();
+  Future<void> deleteAttachment(String id) =>
+      (delete(attachments)..where((t) => t.id.equals(id))).go();
+  Future<void> deleteAttachmentsForNote(String noteId) =>
+      (delete(attachments)..where((t) => t.noteId.equals(noteId))).go();
 }
 
 LazyDatabase _openConnection() {
   return LazyDatabase(() async {
     final dbFolder = await getApplicationDocumentsDirectory();
-    final file = File(p.join(dbFolder.path, 'notes_v4.sqlite'));
+    final file = File(p.join(dbFolder.path, 'notes_v5.sqlite'));
     return NativeDatabase.createInBackground(file);
   });
 }

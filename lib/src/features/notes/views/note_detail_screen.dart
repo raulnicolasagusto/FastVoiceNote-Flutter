@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
@@ -10,9 +11,11 @@ import '../widgets/note_options_dialog.dart';
 import '../widgets/checklist_widget.dart';
 import '../widgets/color_picker_modal.dart';
 import '../widgets/photo_options_dialog.dart';
+import '../services/image_service.dart';
 import '../models/checklist_item.dart';
 import '../models/checklist_utils.dart';
 import '../models/note.dart';
+import '../../../core/database/app_database.dart';
 
 class NoteDetailScreen extends StatefulWidget {
   final String noteId;
@@ -38,6 +41,10 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
   int _currentMatchIndex = 0;
   int _totalMatches = 0;
 
+  // Image service
+  final ImageService _imageService = ImageService();
+  List<AttachmentEntity> _attachments = [];
+
   @override
   void initState() {
     super.initState();
@@ -51,6 +58,14 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
     _contentController = TextEditingController(text: textContent);
     
     _searchController.addListener(_onSearchChanged);
+    _loadAttachments();
+  }
+
+  Future<void> _loadAttachments() async {
+    final attachments = await context.read<NotesProvider>().getAttachments(widget.noteId);
+    setState(() {
+      _attachments = attachments;
+    });
   }
 
   @override
@@ -132,14 +147,38 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
     showDialog(
       context: context,
       builder: (context) => PhotoOptionsDialog(
-        onTakePhoto: () {
-          // TODO: Implement take photo functionality
-        },
+        onTakePhoto: _takePicture,
         onUploadFile: () {
           // TODO: Implement upload file functionality
         },
       ),
     );
+  }
+
+  Future<void> _takePicture() async {
+    final imagePath = await _imageService.takePicture();
+    
+    if (imagePath != null) {
+      // Save attachment to database
+      await context.read<NotesProvider>().addAttachment(
+        widget.noteId,
+        imagePath,
+        'image',
+      );
+      
+      // Reload attachments
+      await _loadAttachments();
+      
+      // Show success feedback
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Photo added successfully'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _convertToChecklist(Note note) async {
@@ -795,6 +834,26 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                       },
                     ),
 
+                    // Images Gallery
+                    if (_attachments.isNotEmpty) ...[
+                      const SizedBox(height: 24),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: _attachments.map((attachment) {
+                          return _ImageThumbnail(
+                            imagePath: attachment.filePath,
+                            textColor: textColor,
+                            onDelete: () async {
+                              await context.read<NotesProvider>().deleteAttachment(attachment.id);
+                              await _imageService.deleteImage(attachment.filePath);
+                              await _loadAttachments();
+                            },
+                          );
+                        }).toList(),
+                      ),
+                    ],
+
                     const SizedBox(height: 100),
                   ],
                 ),
@@ -804,6 +863,54 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
         ),
       ),
     ),
+    );
+  }
+}
+
+class _ImageThumbnail extends StatelessWidget {
+  final String imagePath;
+  final Color textColor;
+  final VoidCallback onDelete;
+
+  const _ImageThumbnail({
+    required this.imagePath,
+    required this.textColor,
+    required this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.file(
+            File(imagePath),
+            width: 150,
+            height: 150,
+            fit: BoxFit.cover,
+          ),
+        ),
+        Positioned(
+          top: 4,
+          right: 4,
+          child: GestureDetector(
+            onTap: onDelete,
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: Colors.black54,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.close,
+                size: 16,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
