@@ -7,6 +7,7 @@ import 'package:screenshot/screenshot.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../core/l10n/generated/app_localizations.dart';
 import '../widgets/note_card_widget.dart';
+import '../models/checklist_utils.dart';
 
 class ShareService {
   final ScreenshotController _screenshotController = ScreenshotController();
@@ -96,9 +97,40 @@ class ShareService {
     required String content,
   }) async {
     try {
+      String textContent;
+      
+      // Check if content has a checklist
+      if (ChecklistUtils.hasChecklist(content)) {
+        // Extract text and checklist items
+        final text = ChecklistUtils.getText(content);
+        final items = ChecklistUtils.jsonToItems(content);
+        
+        final buffer = StringBuffer();
+        
+        // Add text if exists
+        if (text.trim().isNotEmpty) {
+          buffer.writeln(text);
+          if (items.isNotEmpty) {
+            buffer.writeln(); // Empty line between text and checklist
+          }
+        }
+        
+        // Add checklist items
+        for (var item in items) {
+          final checkmark = item.isChecked ? '✓' : '☐';
+          buffer.writeln('$checkmark ${item.text}');
+        }
+        
+        textContent = buffer.toString().trim();
+      } else {
+        // Regular content without checklist
+        textContent = content;
+      }
+      
+      // Create final text to share
       final textToShare = title.isNotEmpty 
-          ? '$title\n\n$content'
-          : content;
+          ? '$title\n\n$textContent'
+          : textContent;
 
       await Share.share(textToShare);
     } catch (e) {
