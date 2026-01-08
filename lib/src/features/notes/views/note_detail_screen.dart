@@ -14,6 +14,7 @@ import '../widgets/photo_options_dialog.dart';
 import '../widgets/share_options_dialog.dart';
 import '../services/image_service.dart';
 import '../services/share_service.dart';
+import '../services/home_widget_service.dart';
 import '../models/checklist_item.dart';
 import '../models/checklist_utils.dart';
 import '../models/note.dart';
@@ -45,6 +46,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
 
   // Image service
   final ImageService _imageService = ImageService();
+  final HomeWidgetService _homeWidgetService = HomeWidgetService();
   List<AttachmentEntity> _attachments = [];
 
   @override
@@ -147,7 +149,9 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
         onLock: _toggleLock,
         onShare: _showShareOptions,
         onAddToHomeScreen: () {
-          // TODO: Implement add to home screen functionality
+          if (note != null) {
+            _addToHomeScreen(note);
+          }
         },
         isLocked: note?.isLocked ?? false,
       ),
@@ -230,6 +234,69 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Error sharing note as text')),
+        );
+      }
+    }
+  }
+
+  Future<void> _addToHomeScreen(Note note) async {
+    try {
+      // Check if the feature is supported
+      final isSupported = await _homeWidgetService.isPinWidgetSupported();
+      
+      if (!isSupported) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Add to Home Screen is not supported on this device'),
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
+        return;
+      }
+
+      // Get content preview (handle checklist if present)
+      String contentPreview;
+      if (ChecklistUtils.hasChecklist(note.content)) {
+        contentPreview = ChecklistUtils.getPreview(note.content);
+      } else {
+        contentPreview = note.content;
+      }
+
+      // Limit content to 100 characters for widget
+      if (contentPreview.length > 100) {
+        contentPreview = '${contentPreview.substring(0, 97)}...';
+      }
+
+      // Request to pin widget
+      final success = await _homeWidgetService.pinNoteToHomeScreen(
+        title: note.title.isEmpty ? 'Note' : note.title,
+        content: contentPreview.isEmpty ? 'Empty note' : contentPreview,
+        colorHex: note.color,
+      );
+
+      if (mounted) {
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Note added to Home Screen'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Could not add note to Home Screen'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${e.toString()}')),
         );
       }
     }
