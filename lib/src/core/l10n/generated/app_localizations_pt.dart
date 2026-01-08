@@ -144,4 +144,12 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get createdWithNotes => 'Criado com Fast Voice Note';
+
+  @override
+  String get tipChecklistVoice =>
+      'Toque no botão de nota de voz rápida e diga \"nova lista\" seguido dos itens. Criaremos automaticamente uma lista que você pode marcar enquanto avança.';
+
+  @override
+  String get tipReminder =>
+      'Depois de gravar uma nota ou criar uma lista, diga algo como \"lembre-me amanhã às 4 PM\". Um lembrete será agendado para essa nota.';
 }

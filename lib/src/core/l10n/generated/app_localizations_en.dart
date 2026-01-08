@@ -144,4 +144,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get createdWithNotes => 'Created with Fast Voice Note';
+
+  @override
+  String get tipChecklistVoice =>
+      'Tap the quick voice note button and say \"new list\" followed by the items. We\'ll automatically create a checklist you can mark as you go.';
+
+  @override
+  String get tipReminder =>
+      'After recording a note or creating a list, say something like \"remind me tomorrow at 4 PM\". A reminder will be scheduled for that note.';
 }

@@ -42,5 +42,7 @@
   "shareOptions": "Opciones para Compartir",
   "shareAsImage": "Compartir como imagen",
   "shareAsText": "Compartir como texto",
-  "createdWithNotes": "Creado con Fast Voice Note"
+  "createdWithNotes": "Creado con Fast Voice Note",
+  "tipChecklistVoice": "Toca el botón de nota de voz rápida y di \"nueva lista\" seguido de los elementos. Crearemos automáticamente una lista que puedes marcar mientras avanzas.",
+  "tipReminder": "Después de grabar una nota o crear una lista, di algo como \"recuérdame mañana a las 4 PM\". Se programará un recordatorio para esa nota."
 }

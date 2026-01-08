@@ -19,6 +19,8 @@ import '../models/checklist_item.dart';
 import '../models/checklist_utils.dart';
 import '../models/note.dart';
 import '../../../core/database/app_database.dart';
+import '../../settings/services/tooltip_service.dart';
+import '../../settings/providers/settings_provider.dart';
 
 class NoteDetailScreen extends StatefulWidget {
   final String noteId;
@@ -47,7 +49,13 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
   // Image service
   final ImageService _imageService = ImageService();
   final HomeWidgetService _homeWidgetService = HomeWidgetService();
+  final TooltipService _tooltipService = TooltipService();
   List<AttachmentEntity> _attachments = [];
+  
+  // GlobalKey for date/chars row to show tooltip above it
+  final GlobalKey _dateCharsKey = GlobalKey();
+  bool _isShowingTooltip = false;
+  bool _tooltipsManuallyClosed = false;
 
   @override
   void initState() {
@@ -63,6 +71,26 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
     
     _searchController.addListener(_onSearchChanged);
     _loadAttachments();
+    
+    // Listen for settings changes
+    context.read<SettingsProvider>().addListener(_onSettingsChanged);
+    
+    // Show tooltips after a delay to let the UI fully render
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(milliseconds: 800), () {
+        if (mounted) {
+          _checkAndShowTooltips();
+        }
+      });
+    });
+  }
+  
+  void _onSettingsChanged() {
+    final settings = context.read<SettingsProvider>();
+    // If tips were just enabled, reset and show tooltips
+    if (settings.showTips && _tooltipsManuallyClosed) {
+      resetTooltips();
+    }
   }
 
   Future<void> _loadAttachments() async {
@@ -74,6 +102,8 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
 
   @override
   void dispose() {
+    _isShowingTooltip = false; // Stop showing tooltips
+    context.read<SettingsProvider>().removeListener(_onSettingsChanged);
     _titleController.dispose();
     _contentController.dispose();
     _searchController.dispose();
@@ -189,6 +219,101 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
           ),
         ],
       ),
+    );
+  }
+  
+  Future<void> _checkAndShowTooltips() async {
+    // Check if tips are enabled in settings
+    final settings = context.read<SettingsProvider>();
+    if (!settings.showTips) return;
+    
+    // Check if tooltips were manually closed
+    if (_tooltipsManuallyClosed) return;
+    
+    // Check if we're already showing a tooltip
+    if (_isShowingTooltip) return;
+    
+    // Verify that the key has a valid context
+    if (_dateCharsKey.currentContext == null) {
+      return; // Exit if context is not ready
+    }
+    
+    if (!mounted) return;
+    setState(() => _isShowingTooltip = true);
+    final l10n = AppLocalizations.of(context)!;
+    
+    // Show first tooltip (checklist voice)
+    _tooltipService.showTooltip(
+      context: context,
+      targetKey: _dateCharsKey,
+      message: l10n.tipChecklistVoice,
+      onDismiss: (bool wasManual) async {
+        if (mounted) {
+          setState(() => _isShowingTooltip = false);
+        }
+        
+        // If user closed manually, stop showing tooltips
+        if (wasManual) {
+          if (mounted) {
+            setState(() => _tooltipsManuallyClosed = true);
+          }
+          return;
+        }
+        
+        // Show second tooltip after a brief delay (auto-dismiss)
+        await Future.delayed(const Duration(milliseconds: 500));
+        if (mounted && !_tooltipsManuallyClosed) {
+          _showReminderTooltip();
+        }
+      },
+      duration: const Duration(seconds: 6),
+    );
+  }
+  
+  void resetTooltips() {
+    setState(() {
+      _tooltipsManuallyClosed = false;
+      _isShowingTooltip = false;
+    });
+    // Restart tooltips after a short delay
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (mounted) {
+        _checkAndShowTooltips();
+      }
+    });
+  }
+  
+  Future<void> _showReminderTooltip() async {
+    final settings = context.read<SettingsProvider>();
+    if (!settings.showTips || !mounted || _tooltipsManuallyClosed) return;
+    
+    setState(() => _isShowingTooltip = true);
+    final l10n = AppLocalizations.of(context)!;
+    
+    _tooltipService.showTooltip(
+      context: context,
+      targetKey: _dateCharsKey,
+      message: l10n.tipReminder,
+      onDismiss: (bool wasManual) async {
+        if (mounted) {
+          setState(() => _isShowingTooltip = false);
+        }
+        
+        // If user closed manually, stop showing tooltips
+        if (wasManual) {
+          if (mounted) {
+            setState(() => _tooltipsManuallyClosed = true);
+          }
+          return;
+        }
+        
+        // Restart the tooltip loop after a brief delay (auto-dismiss)
+        await Future.delayed(const Duration(milliseconds: 500));
+        if (mounted && !_tooltipsManuallyClosed) {
+          _checkAndShowTooltips();
+        }
+      },
+      duration: const Duration(seconds: 6),
     );
   }
 
@@ -940,6 +1065,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
             else
               // Date and character count
               Builder(
+              key: _dateCharsKey,  // Add key here for tooltip positioning
               builder: (context) {
                 final hasChecklist = ChecklistUtils.hasChecklist(note.content);
                 final textContent = ChecklistUtils.getText(note.content);

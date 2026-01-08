@@ -363,6 +363,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Created with Fast Voice Note'**
   String get createdWithNotes;
+
+  /// No description provided for @tipChecklistVoice.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the quick voice note button and say \"new list\" followed by the items. We\'ll automatically create a checklist you can mark as you go.'**
+  String get tipChecklistVoice;
+
+  /// No description provided for @tipReminder.
+  ///
+  /// In en, this message translates to:
+  /// **'After recording a note or creating a list, say something like \"remind me tomorrow at 4 PM\". A reminder will be scheduled for that note.'**
+  String get tipReminder;
 }
 
 class _AppLocalizationsDelegate
