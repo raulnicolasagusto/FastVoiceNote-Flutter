@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
+import 'package:app_links/app_links.dart';
+import 'dart:async';
 import 'src/core/router/app_router.dart';
 import 'src/core/theme/app_theme.dart';
 import 'src/features/settings/providers/settings_provider.dart';
 import 'src/features/notes/providers/notes_provider.dart';
 import 'src/core/l10n/generated/app_localizations.dart';
+import 'src/core/utils/quick_voice_intent.dart';
 
 import 'src/core/database/app_database.dart';
 
@@ -22,8 +25,64 @@ void main() {
   );
 }
 
-class FastVoiceNoteApp extends StatelessWidget {
+class FastVoiceNoteApp extends StatefulWidget {
   const FastVoiceNoteApp({super.key});
+
+  @override
+  State<FastVoiceNoteApp> createState() => _FastVoiceNoteAppState();
+}
+
+class _FastVoiceNoteAppState extends State<FastVoiceNoteApp> {
+  late AppLinks _appLinks;
+  StreamSubscription? _linkSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _initDeepLinks();
+  }
+
+  @override
+  void dispose() {
+    _linkSubscription?.cancel();
+    super.dispose();
+  }
+
+  void _initDeepLinks() {
+    _appLinks = AppLinks();
+    
+    // Handle initial link when app is launched
+    _handleInitialLink();
+    
+    // Handle links when app is already running
+    _linkSubscription = _appLinks.uriLinkStream.listen((Uri uri) {
+      _handleDeepLink(uri);
+    }, onError: (err) {
+      debugPrint('Deep link error: $err');
+    });
+  }
+
+  Future<void> _handleInitialLink() async {
+    try {
+      final initialUri = await _appLinks.getInitialLink();
+      if (initialUri != null) {
+        // Wait a bit to ensure the app is fully loaded
+        await Future.delayed(const Duration(milliseconds: 500));
+        _handleDeepLink(initialUri);
+      }
+    } catch (e) {
+      debugPrint('Error handling initial link: $e');
+    }
+  }
+
+  void _handleDeepLink(Uri uri) {
+    if (uri.scheme == 'fastvoicenote') {
+      if (uri.host == 'quick_voice_note') {
+        // Trigger quick voice note
+        QuickVoiceNoteIntent.trigger();
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

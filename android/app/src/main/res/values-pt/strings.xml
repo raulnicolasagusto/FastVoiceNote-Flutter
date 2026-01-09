@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Shortcut labels for Quick Voice Note - Portuguese -->
+    <string name="shortcut_quick_voice_short">Voz Rápida</string>
+    <string name="shortcut_quick_voice_long">Nota de Voz Rápida</string>
+</resources>

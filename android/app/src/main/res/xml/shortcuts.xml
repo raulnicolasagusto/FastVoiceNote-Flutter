@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="quick_voice_note"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_quick_voice_short"
+        android:shortcutLongLabel="@string/shortcut_quick_voice_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.fastvoicenote.fast_voice_note"
+            android:targetClass="com.fastvoicenote.fast_voice_note.MainActivity"
+            android:data="fastvoicenote://quick_voice_note" />
+        <categories android:name="android.shortcut.conversation" />
+    </shortcut>
+</shortcuts>

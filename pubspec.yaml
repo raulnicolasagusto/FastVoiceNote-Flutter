@@ -54,6 +54,7 @@ dependencies:
   screenshot: ^3.0.0
   home_widget: ^0.9.0
   shared_preferences: ^2.3.3
+  app_links: ^6.3.4
 
 dev_dependencies:
   flutter_test:

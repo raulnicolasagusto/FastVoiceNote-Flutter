@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Shortcut labels for Quick Voice Note -->
+    <string name="shortcut_quick_voice_short">Quick Voice</string>
+    <string name="shortcut_quick_voice_long">Start Quick Voice Note</string>
+</resources>

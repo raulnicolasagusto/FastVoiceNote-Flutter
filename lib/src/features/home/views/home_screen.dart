@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'dart:async';
 import '../../../core/l10n/generated/app_localizations.dart';
 import '../widgets/note_card.dart';
 import '../../../shared/widgets/app_drawer.dart';
@@ -14,6 +15,7 @@ import '../../notes/models/checklist_utils.dart';
 import '../../transcription/services/audio_recorder_service.dart';
 import '../../transcription/widgets/recording_dialog.dart';
 import '../../transcription/utils/voice_to_checklist_processor.dart';
+import '../../../core/utils/quick_voice_intent.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -31,6 +33,7 @@ class _HomeScreenState extends State<HomeScreen>
   bool _isFabExpanded = false;
   final Set<String> _selectedNotes = {};
   bool _foldersLoaded = false;
+  StreamSubscription? _quickVoiceSubscription;
   
   // Search state
   bool _isSearching = false;
@@ -51,6 +54,13 @@ class _HomeScreenState extends State<HomeScreen>
       reverseCurve: Curves.easeInBack,
     );
     _loadFolders();
+    
+    // Listen for quick voice note intent from deep link
+    _quickVoiceSubscription = QuickVoiceNoteIntent.stream.listen((_) {
+      if (mounted) {
+        _onQuickVoiceNote();
+      }
+    });
   }
 
   Future<void> _loadFolders() async {
@@ -81,6 +91,7 @@ class _HomeScreenState extends State<HomeScreen>
     _tabController.dispose();
     _searchController.dispose();
     _searchFocusNode.dispose();
+    _quickVoiceSubscription?.cancel();
     super.dispose();
   }
 
