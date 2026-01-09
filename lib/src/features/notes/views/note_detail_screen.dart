@@ -12,6 +12,7 @@ import '../widgets/checklist_widget.dart';
 import '../widgets/color_picker_modal.dart';
 import '../widgets/photo_options_dialog.dart';
 import '../widgets/share_options_dialog.dart';
+import '../widgets/reminder_modal.dart';
 import '../services/image_service.dart';
 import '../services/share_service.dart';
 import '../services/home_widget_service.dart';
@@ -165,6 +166,24 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
     if (_isEditingContent) _saveContent();
   }
 
+  void _showReminderModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => ReminderModal(
+        onDateTimeSelected: (dateTime) {
+          final l10n = AppLocalizations.of(context)!;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Reminder set for ${DateFormat('MMM d, y h:mm a').format(dateTime)}'),
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   void _showOptionsDialog() {
     final note = context.read<NotesProvider>().getNoteById(widget.noteId);
     
@@ -176,6 +195,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
             _convertToChecklist(note);
           }
         },
+        onReminder: _showReminderModal,
         onLock: _toggleLock,
         onShare: _showShareOptions,
         onAddToHomeScreen: () {

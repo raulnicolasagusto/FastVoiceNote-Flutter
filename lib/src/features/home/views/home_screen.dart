@@ -87,6 +87,15 @@ class _HomeScreenState extends State<HomeScreen>
     return [null, ...allFolders.keys];
   }
 
+  String? _getCurrentFolderId() {
+    final folderIds = _getFolderIds();
+    final currentIndex = _tabController.index;
+    if (currentIndex >= 0 && currentIndex < folderIds.length) {
+      return folderIds[currentIndex];
+    }
+    return null;
+  }
+
   @override
   void dispose() {
     _animationController.dispose();
@@ -650,6 +659,7 @@ class _HomeScreenState extends State<HomeScreen>
           updatedAt: now,
           color: 'FFFFFFFF',
           hasVoice: true, // Mark as voice note source
+          folderId: _getCurrentFolderId(),
         );
 
         context.read<NotesProvider>().addNote(newNote);
@@ -680,6 +690,7 @@ class _HomeScreenState extends State<HomeScreen>
       createdAt: now,
       updatedAt: now,
       color: 'FFFFFFFF',
+      folderId: _getCurrentFolderId(),
     );
 
     await context.read<NotesProvider>().addNote(newNote);

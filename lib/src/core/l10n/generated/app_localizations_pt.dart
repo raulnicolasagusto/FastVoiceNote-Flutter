@@ -66,6 +66,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get checklist => 'Lista de Tarefas';
 
   @override
+  String get reminder => 'Lembrete';
+
+  @override
   String get lock => 'Bloquear';
 
   @override

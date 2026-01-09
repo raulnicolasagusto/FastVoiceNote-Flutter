@@ -214,6 +214,12 @@ abstract class AppLocalizations {
   /// **'Checklist'**
   String get checklist;
 
+  /// No description provided for @reminder.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder'**
+  String get reminder;
+
   /// No description provided for @lock.
   ///
   /// In en, this message translates to:

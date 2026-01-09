@@ -4,6 +4,7 @@ import '../../../core/l10n/generated/app_localizations.dart';
 
 class NoteOptionsDialog extends StatelessWidget {
   final VoidCallback? onChecklist;
+  final VoidCallback? onReminder;
   final VoidCallback? onLock;
   final VoidCallback? onShare;
   final VoidCallback? onAddToHomeScreen;
@@ -12,6 +13,7 @@ class NoteOptionsDialog extends StatelessWidget {
   const NoteOptionsDialog({
     super.key,
     this.onChecklist,
+    this.onReminder,
     this.onLock,
     this.onShare,
     this.onAddToHomeScreen,
@@ -53,6 +55,16 @@ class NoteOptionsDialog extends StatelessWidget {
               onTap: () {
                 Navigator.of(context).pop();
                 onChecklist?.call();
+              },
+            ),
+            const SizedBox(height: 16),
+            _OptionItem(
+              icon: Icons.notifications_none,
+              label: l10n.reminder,
+              isDark: isDark,
+              onTap: () {
+                Navigator.of(context).pop();
+                onReminder?.call();
               },
             ),
             const SizedBox(height: 16),
