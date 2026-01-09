@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:app_links/app_links.dart';
 import 'dart:async';
 import 'src/core/router/app_router.dart';
@@ -12,12 +13,24 @@ import 'src/core/utils/quick_voice_intent.dart';
 
 import 'src/core/database/app_database.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Load persisted locale to avoid flicker on startup
+  Locale? initialLocale;
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    final code = prefs.getString('app_locale_code');
+    if (code != null && ['en', 'es', 'pt'].contains(code)) {
+      initialLocale = Locale(code);
+    }
+  } catch (_) {}
+
   final database = AppDatabase();
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => SettingsProvider()),
+        ChangeNotifierProvider(create: (_) => SettingsProvider(initialLocale: initialLocale)),
         ChangeNotifierProvider(create: (_) => NotesProvider(database)),
       ],
       child: const FastVoiceNoteApp(),

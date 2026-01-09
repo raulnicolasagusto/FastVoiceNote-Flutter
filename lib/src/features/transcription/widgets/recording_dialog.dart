@@ -4,8 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/l10n/generated/app_localizations.dart';
 
 class RecordingDialog extends StatefulWidget {
-  final VoidCallback onStop;
-  final VoidCallback onCancel;
+  final Future<void> Function() onStop;
+  final Future<void> Function() onCancel;
 
   const RecordingDialog({
     super.key,
@@ -41,7 +41,7 @@ class _RecordingDialogState extends State<RecordingDialog>
     setState(() {
       _isProcessing = true;
     });
-    widget.onStop();
+    await widget.onStop();
   }
 
   @override
@@ -112,7 +112,7 @@ class _RecordingDialogState extends State<RecordingDialog>
               children: [
                 Expanded(
                   child: TextButton.icon(
-                    onPressed: _isProcessing ? null : widget.onCancel,
+                    onPressed: _isProcessing ? null : () async { await widget.onCancel(); },
                     icon: const Icon(Icons.close, color: Colors.white),
                     label: Text(
                       l10n.cancel,

@@ -34,6 +34,7 @@ class _HomeScreenState extends State<HomeScreen>
   final Set<String> _selectedNotes = {};
   bool _foldersLoaded = false;
   StreamSubscription? _quickVoiceSubscription;
+  bool _isQuickVoiceActive = false;
   
   // Search state
   bool _isSearching = false;
@@ -555,6 +556,8 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Future<void> _onQuickVoiceNote() async {
+    if (_isQuickVoiceActive) return;
+    _isQuickVoiceActive = true;
     // 1. Close FAB first
     _toggleFab();
 
@@ -633,6 +636,7 @@ class _HomeScreenState extends State<HomeScreen>
       }
     } finally {
       recorderService.dispose();
+      _isQuickVoiceActive = false;
     }
   }
 
