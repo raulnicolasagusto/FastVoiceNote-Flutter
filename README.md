@@ -165,6 +165,30 @@ flutter build appbundle --release
 flutter build ios --release
 ```
 
+## ⚡ Android App Shortcut & Deep Links
+
+- **App Shortcut:** Long-press the app icon to trigger "Quick Voice Note" and start recording instantly.
+- **Deep Link Scheme:** `fastvoicenote://quick_voice_note` opens the app and auto-starts recording.
+- **Implementation:**
+   - Manifest + intent filter in [android/app/src/main/AndroidManifest.xml](android/app/src/main/AndroidManifest.xml)
+   - Shortcut definition in [android/app/src/main/res/xml/shortcuts.xml](android/app/src/main/res/xml/shortcuts.xml)
+   - Runtime handling with `app_links` in [lib/main.dart](lib/main.dart) and a global stream in [lib/src/core/utils/quick_voice_intent.dart](lib/src/core/utils/quick_voice_intent.dart)
+- **Note:** Shortcut support is Android-specific.
+
+## 🛡️ Privacy & Play Store Compliance
+
+- **Privacy Policy URL:** https://fastvoicenote.blogspot.com/p/privacy-policy.html
+- **Data Safety:** Declares microphone access; transcription is processed locally on-device; no data is collected or shared.
+- **Manifest Permissions:** `RECORD_AUDIO` only; `CAMERA` removed.
+- **Submission Tips:** In Play Console, add the policy URL under App content → Privacy policy and complete Data Safety with the above details.
+
+## 🔧 Settings Persistence
+
+- **Theme Mode:** Dark/Light/System selection is persisted via `SharedPreferences`.
+- **Show Tips:** The guidance toggle is persisted and respected across restarts.
+- **Locale:** The chosen language (`en`, `es`, `pt`) is saved and applied on startup.
+- **Key Files:** [lib/src/features/settings/providers/settings_provider.dart](lib/src/features/settings/providers/settings_provider.dart), [lib/main.dart](lib/main.dart)
+
 ## 🎯 Core Features Deep Dive
 
 ### Voice-to-Checklist Detection

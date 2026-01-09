@@ -16,21 +16,40 @@ import 'src/core/database/app_database.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Load persisted locale to avoid flicker on startup
+  // Load persisted settings to avoid flicker on startup
   Locale? initialLocale;
+  ThemeMode? initialThemeMode;
+  bool? initialShowTips;
   try {
     final prefs = await SharedPreferences.getInstance();
     final code = prefs.getString('app_locale_code');
     if (code != null && ['en', 'es', 'pt'].contains(code)) {
       initialLocale = Locale(code);
     }
+    final themeStr = prefs.getString('app_theme_mode');
+    switch (themeStr) {
+      case 'dark':
+        initialThemeMode = ThemeMode.dark;
+        break;
+      case 'light':
+        initialThemeMode = ThemeMode.light;
+        break;
+      case 'system':
+        initialThemeMode = ThemeMode.system;
+        break;
+    }
+    initialShowTips = prefs.getBool('app_show_tips');
   } catch (_) {}
 
   final database = AppDatabase();
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => SettingsProvider(initialLocale: initialLocale)),
+        ChangeNotifierProvider(create: (_) => SettingsProvider(
+          initialLocale: initialLocale,
+          initialThemeMode: initialThemeMode,
+          initialShowTips: initialShowTips,
+        )),
         ChangeNotifierProvider(create: (_) => NotesProvider(database)),
       ],
       child: const FastVoiceNoteApp(),
