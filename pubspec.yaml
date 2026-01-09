@@ -55,6 +55,7 @@ dependencies:
   home_widget: ^0.9.0
   shared_preferences: ^2.3.3
   app_links: ^6.3.4
+  vibration: ^2.0.0
 
 dev_dependencies:
   flutter_test:
@@ -104,4 +105,13 @@ flutter:
   generate: true
   assets:
     - assets/models/
+    - assets/first-note.png
+    - assets/
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/icon.png"
+  adaptive_icon_background: "#ffffff"
+  adaptive_icon_foreground: "assets/icon.png"
 

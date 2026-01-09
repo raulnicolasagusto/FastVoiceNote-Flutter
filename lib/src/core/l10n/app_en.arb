@@ -47,5 +47,6 @@
   "tipReminder": "After recording a note or creating a list, say something like \"remind me tomorrow at 4 PM\". A reminder will be scheduled for that note.",
   "shortcutQuickVoice": "Quick Voice Note",
   "shortcutQuickVoiceDesc": "Start recording a voice note instantly",
-  "processing": "Processing..."
+  "processing": "Processing...",
+  "tapToCreateFirstNote": "Tap to create your first note"
 }

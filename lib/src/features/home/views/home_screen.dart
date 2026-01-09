@@ -16,6 +16,7 @@ import '../../transcription/services/audio_recorder_service.dart';
 import '../../transcription/widgets/recording_dialog.dart';
 import '../../transcription/utils/voice_to_checklist_processor.dart';
 import '../../../core/utils/quick_voice_intent.dart';
+import 'package:vibration/vibration.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -110,6 +111,7 @@ class _HomeScreenState extends State<HomeScreen>
   bool get _isSelectionMode => _selectedNotes.isNotEmpty;
 
   void _toggleSelection(String noteId) {
+    final wasSelectionEmpty = _selectedNotes.isEmpty;
     setState(() {
       if (_selectedNotes.contains(noteId)) {
         _selectedNotes.remove(noteId);
@@ -117,6 +119,10 @@ class _HomeScreenState extends State<HomeScreen>
         _selectedNotes.add(noteId);
       }
     });
+    
+    if (wasSelectionEmpty && _selectedNotes.isNotEmpty) {
+      Vibration.vibrate(duration: 50, amplitude: 100);
+    }
   }
 
   void _clearSelection() {
@@ -178,6 +184,10 @@ class _HomeScreenState extends State<HomeScreen>
     return filtered;
   }
 
+  String _getEmptyStateImage() {
+    return 'assets/first-note.png';
+  }
+
   Widget _buildNoteGrid(List<Note> notesToShow, BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(
@@ -188,10 +198,27 @@ class _HomeScreenState extends State<HomeScreen>
       ),
       child: notesToShow.isEmpty
           ? Center(
-              child: Text(
-                'No notes',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.grey[600],
+              child: GestureDetector(
+                onTap: _onNewNote,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    ClipOval(
+                      child: Image.asset(
+                        _getEmptyStateImage(),
+                        width: 120,
+                        height: 120,
+                        filterQuality: FilterQuality.high,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      AppLocalizations.of(context)!.tapToCreateFirstNote,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
                 ),
               ),
             )

@@ -393,6 +393,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Processing...'**
   String get processing;
+
+  /// No description provided for @tapToCreateFirstNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to create your first note'**
+  String get tapToCreateFirstNote;
 }
 
 class _AppLocalizationsDelegate

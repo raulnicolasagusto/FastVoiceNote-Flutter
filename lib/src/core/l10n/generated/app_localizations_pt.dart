@@ -162,4 +162,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get processing => 'Processando...';
+
+  @override
+  String get tapToCreateFirstNote => 'Toque para criar sua primeira nota';
 }

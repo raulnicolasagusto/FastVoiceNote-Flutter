@@ -161,4 +161,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get processing => 'Procesando...';
+
+  @override
+  String get tapToCreateFirstNote => 'Toca para crear tu primera nota';
 }

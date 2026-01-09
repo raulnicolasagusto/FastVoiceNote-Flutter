@@ -47,5 +47,6 @@
   "tipReminder": "Depois de gravar uma nota ou criar uma lista, diga algo como \"lembre-me amanhã às 4 PM\". Um lembrete será agendado para essa nota.",
   "shortcutQuickVoice": "Nota de Voz Rápida",
   "shortcutQuickVoiceDesc": "Começar a gravar uma nota de voz instantaneamente",
-  "processing": "Processando..."
+  "processing": "Processando...",
+  "tapToCreateFirstNote": "Toque para criar sua primeira nota"
 }
