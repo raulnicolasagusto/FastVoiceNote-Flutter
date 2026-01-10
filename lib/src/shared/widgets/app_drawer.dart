@@ -87,6 +87,19 @@ class AppDrawer extends StatelessWidget {
                     .showSnackBar(SnackBar(content: Text(text)));
               },
             ),
+            ListTile(
+              leading: const Icon(Icons.notification_important_outlined),
+              title: const Text('Probar notificación ahora'),
+              subtitle: const Text('Envía una notificación inmediata de prueba'),
+              onTap: () async {
+                final locale = Localizations.localeOf(context).languageCode;
+                await NotificationService().showTestNotification(locale: locale);
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Notificación de prueba enviada')),
+                );
+              },
+            ),
             const Spacer(),
             Padding(
               padding: const EdgeInsets.all(16.0),
