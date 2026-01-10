@@ -55,5 +55,6 @@
   "reminderNotificationTitle": "Recordatorio de Nota",
   "reminderNotificationBody": "Recordatorio para la nota: {title}",
   "reminderSetForToday": "Recordatorio activado para hoy a las",
-  "reminderSetForDate": "Recordatorio activado para el"
+  "reminderSetForDate": "Recordatorio activado para el",
+  "tapToAddContent": "Toca para agregar contenido"
 }

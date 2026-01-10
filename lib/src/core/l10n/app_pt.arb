@@ -55,5 +55,6 @@
   "reminderNotificationTitle": "Lembrete de Nota",
   "reminderNotificationBody": "Lembrete para a nota: {title}",
   "reminderSetForToday": "Lembrete ativado para hoje às",
-  "reminderSetForDate": "Lembrete ativado para"
+  "reminderSetForDate": "Lembrete ativado para",
+  "tapToAddContent": "Toque para adicionar conteúdo"
 }

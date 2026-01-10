@@ -187,4 +187,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get reminderSetForDate => 'Recordatorio activado para el';
+
+  @override
+  String get tapToAddContent => 'Toca para agregar contenido';
 }

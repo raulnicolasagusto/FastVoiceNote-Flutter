@@ -187,4 +187,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reminderSetForDate => 'Reminder set for';
+
+  @override
+  String get tapToAddContent => 'Tap to add content';
 }

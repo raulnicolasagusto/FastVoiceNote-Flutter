@@ -188,4 +188,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get reminderSetForDate => 'Lembrete ativado para';
+
+  @override
+  String get tapToAddContent => 'Toque para adicionar conteúdo';
 }

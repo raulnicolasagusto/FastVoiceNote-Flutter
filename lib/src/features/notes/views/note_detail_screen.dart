@@ -1233,15 +1233,6 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                           ),
                         ),
                       ],
-                      if (!hasChecklist) ...[
-                        const Spacer(),
-                        Text(
-                          'Toca para editar',
-                          style: Theme.of(
-                            context,
-                          ).textTheme.bodySmall?.copyWith(color: hintColor),
-                        ),
-                      ],
                     ],
                   ),
                 );
@@ -1332,9 +1323,9 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                                       onSubmitted: (_) => _saveContent(),
                                     )
                                   : textContent.isNotEmpty || !hasChecklist
-                                      ? RichText(
-                                          text: _buildHighlightedText(
-                                            textContent.isEmpty ? 'Toca para agregar contenido' : textContent,
+                                  ? RichText(
+                                           text: _buildHighlightedText(
+                                             textContent.isEmpty ? AppLocalizations.of(context)!.tapToAddContent : textContent,
                                             Theme.of(context).textTheme.bodyLarge?.copyWith(
                                               color: textContent.isEmpty ? hintColor : textColor,
                                             ),

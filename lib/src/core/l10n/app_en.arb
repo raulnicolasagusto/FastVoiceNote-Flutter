@@ -55,5 +55,6 @@
   "reminderNotificationTitle": "Note Reminder",
   "reminderNotificationBody": "Reminder for note: {title}",
   "reminderSetForToday": "Reminder set for today at",
-  "reminderSetForDate": "Reminder set for"
+  "reminderSetForDate": "Reminder set for",
+  "tapToAddContent": "Tap to add content"
 }

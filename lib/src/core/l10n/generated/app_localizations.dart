@@ -441,6 +441,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Reminder set for'**
   String get reminderSetForDate;
+
+  /// No description provided for @tapToAddContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to add content'**
+  String get tapToAddContent;
 }
 
 class _AppLocalizationsDelegate
