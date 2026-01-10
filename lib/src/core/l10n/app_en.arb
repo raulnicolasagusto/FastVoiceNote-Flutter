@@ -19,6 +19,7 @@
   "moreOptions": "More Options",
   "checklist": "Checklist",
   "reminder": "Reminder",
+  "disableReminder": "Disable Reminder",
   "lock": "Lock",
   "unlock": "Unlock",
   "share": "Share",
@@ -49,5 +50,7 @@
   "shortcutQuickVoice": "Quick Voice Note",
   "shortcutQuickVoiceDesc": "Start recording a voice note instantly",
   "processing": "Processing...",
-  "tapToCreateFirstNote": "Tap to create your first note"
+  "tapToCreateFirstNote": "Tap to create your first note",
+  "reminderNotificationTitle": "Note Reminder",
+  "reminderNotificationBody": "Reminder for note: {title}"
 }

@@ -258,6 +258,7 @@ class _HomeScreenState extends State<HomeScreen>
                     color: Color(int.parse('0x${note.color}')),
                     hasImage: note.hasImage,
                     hasVoice: note.hasVoice,
+                    hasReminder: note.reminderAt != null,
                     isSelected: isSelected,
                     isPinned: note.isPinned,
                   ),

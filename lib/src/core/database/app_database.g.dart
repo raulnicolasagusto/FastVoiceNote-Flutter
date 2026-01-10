@@ -140,6 +140,17 @@ class $NotesTable extends Notes with TableInfo<$NotesTable, NoteEntity> {
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _reminderAtMeta = const VerificationMeta(
+    'reminderAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> reminderAt = GeneratedColumn<DateTime>(
+    'reminder_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -153,6 +164,7 @@ class $NotesTable extends Notes with TableInfo<$NotesTable, NoteEntity> {
     folderId,
     isPinned,
     isLocked,
+    reminderAt,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -241,6 +253,12 @@ class $NotesTable extends Notes with TableInfo<$NotesTable, NoteEntity> {
         isLocked.isAcceptableOrUnknown(data['is_locked']!, _isLockedMeta),
       );
     }
+    if (data.containsKey('reminder_at')) {
+      context.handle(
+        _reminderAtMeta,
+        reminderAt.isAcceptableOrUnknown(data['reminder_at']!, _reminderAtMeta),
+      );
+    }
     return context;
   }
 
@@ -294,6 +312,10 @@ class $NotesTable extends Notes with TableInfo<$NotesTable, NoteEntity> {
         DriftSqlType.bool,
         data['${effectivePrefix}is_locked'],
       )!,
+      reminderAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}reminder_at'],
+      ),
     );
   }
 
@@ -315,6 +337,7 @@ class NoteEntity extends DataClass implements Insertable<NoteEntity> {
   final String? folderId;
   final bool isPinned;
   final bool isLocked;
+  final DateTime? reminderAt;
   const NoteEntity({
     required this.id,
     required this.title,
@@ -327,6 +350,7 @@ class NoteEntity extends DataClass implements Insertable<NoteEntity> {
     this.folderId,
     required this.isPinned,
     required this.isLocked,
+    this.reminderAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -344,6 +368,9 @@ class NoteEntity extends DataClass implements Insertable<NoteEntity> {
     }
     map['is_pinned'] = Variable<bool>(isPinned);
     map['is_locked'] = Variable<bool>(isLocked);
+    if (!nullToAbsent || reminderAt != null) {
+      map['reminder_at'] = Variable<DateTime>(reminderAt);
+    }
     return map;
   }
 
@@ -362,6 +389,9 @@ class NoteEntity extends DataClass implements Insertable<NoteEntity> {
           : Value(folderId),
       isPinned: Value(isPinned),
       isLocked: Value(isLocked),
+      reminderAt: reminderAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(reminderAt),
     );
   }
 
@@ -382,6 +412,7 @@ class NoteEntity extends DataClass implements Insertable<NoteEntity> {
       folderId: serializer.fromJson<String?>(json['folderId']),
       isPinned: serializer.fromJson<bool>(json['isPinned']),
       isLocked: serializer.fromJson<bool>(json['isLocked']),
+      reminderAt: serializer.fromJson<DateTime?>(json['reminderAt']),
     );
   }
   @override
@@ -399,6 +430,7 @@ class NoteEntity extends DataClass implements Insertable<NoteEntity> {
       'folderId': serializer.toJson<String?>(folderId),
       'isPinned': serializer.toJson<bool>(isPinned),
       'isLocked': serializer.toJson<bool>(isLocked),
+      'reminderAt': serializer.toJson<DateTime?>(reminderAt),
     };
   }
 
@@ -414,6 +446,7 @@ class NoteEntity extends DataClass implements Insertable<NoteEntity> {
     Value<String?> folderId = const Value.absent(),
     bool? isPinned,
     bool? isLocked,
+    Value<DateTime?> reminderAt = const Value.absent(),
   }) => NoteEntity(
     id: id ?? this.id,
     title: title ?? this.title,
@@ -426,6 +459,7 @@ class NoteEntity extends DataClass implements Insertable<NoteEntity> {
     folderId: folderId.present ? folderId.value : this.folderId,
     isPinned: isPinned ?? this.isPinned,
     isLocked: isLocked ?? this.isLocked,
+    reminderAt: reminderAt.present ? reminderAt.value : this.reminderAt,
   );
   NoteEntity copyWithCompanion(NotesCompanion data) {
     return NoteEntity(
@@ -440,6 +474,9 @@ class NoteEntity extends DataClass implements Insertable<NoteEntity> {
       folderId: data.folderId.present ? data.folderId.value : this.folderId,
       isPinned: data.isPinned.present ? data.isPinned.value : this.isPinned,
       isLocked: data.isLocked.present ? data.isLocked.value : this.isLocked,
+      reminderAt: data.reminderAt.present
+          ? data.reminderAt.value
+          : this.reminderAt,
     );
   }
 
@@ -456,7 +493,8 @@ class NoteEntity extends DataClass implements Insertable<NoteEntity> {
           ..write('hasVoice: $hasVoice, ')
           ..write('folderId: $folderId, ')
           ..write('isPinned: $isPinned, ')
-          ..write('isLocked: $isLocked')
+          ..write('isLocked: $isLocked, ')
+          ..write('reminderAt: $reminderAt')
           ..write(')'))
         .toString();
   }
@@ -474,6 +512,7 @@ class NoteEntity extends DataClass implements Insertable<NoteEntity> {
     folderId,
     isPinned,
     isLocked,
+    reminderAt,
   );
   @override
   bool operator ==(Object other) =>
@@ -489,7 +528,8 @@ class NoteEntity extends DataClass implements Insertable<NoteEntity> {
           other.hasVoice == this.hasVoice &&
           other.folderId == this.folderId &&
           other.isPinned == this.isPinned &&
-          other.isLocked == this.isLocked);
+          other.isLocked == this.isLocked &&
+          other.reminderAt == this.reminderAt);
 }
 
 class NotesCompanion extends UpdateCompanion<NoteEntity> {
@@ -504,6 +544,7 @@ class NotesCompanion extends UpdateCompanion<NoteEntity> {
   final Value<String?> folderId;
   final Value<bool> isPinned;
   final Value<bool> isLocked;
+  final Value<DateTime?> reminderAt;
   final Value<int> rowid;
   const NotesCompanion({
     this.id = const Value.absent(),
@@ -517,6 +558,7 @@ class NotesCompanion extends UpdateCompanion<NoteEntity> {
     this.folderId = const Value.absent(),
     this.isPinned = const Value.absent(),
     this.isLocked = const Value.absent(),
+    this.reminderAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   NotesCompanion.insert({
@@ -531,6 +573,7 @@ class NotesCompanion extends UpdateCompanion<NoteEntity> {
     this.folderId = const Value.absent(),
     this.isPinned = const Value.absent(),
     this.isLocked = const Value.absent(),
+    this.reminderAt = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        title = Value(title),
@@ -550,6 +593,7 @@ class NotesCompanion extends UpdateCompanion<NoteEntity> {
     Expression<String>? folderId,
     Expression<bool>? isPinned,
     Expression<bool>? isLocked,
+    Expression<DateTime>? reminderAt,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -564,6 +608,7 @@ class NotesCompanion extends UpdateCompanion<NoteEntity> {
       if (folderId != null) 'folder_id': folderId,
       if (isPinned != null) 'is_pinned': isPinned,
       if (isLocked != null) 'is_locked': isLocked,
+      if (reminderAt != null) 'reminder_at': reminderAt,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -580,6 +625,7 @@ class NotesCompanion extends UpdateCompanion<NoteEntity> {
     Value<String?>? folderId,
     Value<bool>? isPinned,
     Value<bool>? isLocked,
+    Value<DateTime?>? reminderAt,
     Value<int>? rowid,
   }) {
     return NotesCompanion(
@@ -594,6 +640,7 @@ class NotesCompanion extends UpdateCompanion<NoteEntity> {
       folderId: folderId ?? this.folderId,
       isPinned: isPinned ?? this.isPinned,
       isLocked: isLocked ?? this.isLocked,
+      reminderAt: reminderAt ?? this.reminderAt,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -634,6 +681,9 @@ class NotesCompanion extends UpdateCompanion<NoteEntity> {
     if (isLocked.present) {
       map['is_locked'] = Variable<bool>(isLocked.value);
     }
+    if (reminderAt.present) {
+      map['reminder_at'] = Variable<DateTime>(reminderAt.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -654,6 +704,7 @@ class NotesCompanion extends UpdateCompanion<NoteEntity> {
           ..write('folderId: $folderId, ')
           ..write('isPinned: $isPinned, ')
           ..write('isLocked: $isLocked, ')
+          ..write('reminderAt: $reminderAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -1093,6 +1144,7 @@ typedef $$NotesTableCreateCompanionBuilder =
       Value<String?> folderId,
       Value<bool> isPinned,
       Value<bool> isLocked,
+      Value<DateTime?> reminderAt,
       Value<int> rowid,
     });
 typedef $$NotesTableUpdateCompanionBuilder =
@@ -1108,6 +1160,7 @@ typedef $$NotesTableUpdateCompanionBuilder =
       Value<String?> folderId,
       Value<bool> isPinned,
       Value<bool> isLocked,
+      Value<DateTime?> reminderAt,
       Value<int> rowid,
     });
 
@@ -1171,6 +1224,11 @@ class $$NotesTableFilterComposer extends Composer<_$AppDatabase, $NotesTable> {
 
   ColumnFilters<bool> get isLocked => $composableBuilder(
     column: $table.isLocked,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get reminderAt => $composableBuilder(
+    column: $table.reminderAt,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -1238,6 +1296,11 @@ class $$NotesTableOrderingComposer
     column: $table.isLocked,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<DateTime> get reminderAt => $composableBuilder(
+    column: $table.reminderAt,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$NotesTableAnnotationComposer
@@ -1281,6 +1344,11 @@ class $$NotesTableAnnotationComposer
 
   GeneratedColumn<bool> get isLocked =>
       $composableBuilder(column: $table.isLocked, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get reminderAt => $composableBuilder(
+    column: $table.reminderAt,
+    builder: (column) => column,
+  );
 }
 
 class $$NotesTableTableManager
@@ -1322,6 +1390,7 @@ class $$NotesTableTableManager
                 Value<String?> folderId = const Value.absent(),
                 Value<bool> isPinned = const Value.absent(),
                 Value<bool> isLocked = const Value.absent(),
+                Value<DateTime?> reminderAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => NotesCompanion(
                 id: id,
@@ -1335,6 +1404,7 @@ class $$NotesTableTableManager
                 folderId: folderId,
                 isPinned: isPinned,
                 isLocked: isLocked,
+                reminderAt: reminderAt,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -1350,6 +1420,7 @@ class $$NotesTableTableManager
                 Value<String?> folderId = const Value.absent(),
                 Value<bool> isPinned = const Value.absent(),
                 Value<bool> isLocked = const Value.absent(),
+                Value<DateTime?> reminderAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => NotesCompanion.insert(
                 id: id,
@@ -1363,6 +1434,7 @@ class $$NotesTableTableManager
                 folderId: folderId,
                 isPinned: isPinned,
                 isLocked: isLocked,
+                reminderAt: reminderAt,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

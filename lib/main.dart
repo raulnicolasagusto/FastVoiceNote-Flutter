@@ -10,11 +10,15 @@ import 'src/features/settings/providers/settings_provider.dart';
 import 'src/features/notes/providers/notes_provider.dart';
 import 'src/core/l10n/generated/app_localizations.dart';
 import 'src/core/utils/quick_voice_intent.dart';
+import 'src/features/notifications/services/notification_service.dart';
 
 import 'src/core/database/app_database.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize notification service
+  NotificationService().initialize();
 
   // Load persisted settings to avoid flicker on startup
   Locale? initialLocale;

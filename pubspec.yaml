@@ -56,6 +56,8 @@ dependencies:
   shared_preferences: ^2.3.3
   app_links: ^6.3.4
   vibration: ^2.0.0
+  flutter_local_notifications: ^17.0.0
+  timezone: ^0.9.4
 
 dev_dependencies:
   flutter_test:

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/l10n/generated/app_localizations.dart';
+import '../../features/notifications/services/notification_service.dart';
 import '../../features/settings/providers/settings_provider.dart';
 
 class AppDrawer extends StatelessWidget {
@@ -70,6 +71,21 @@ class AppDrawer extends StatelessWidget {
                   }
                 },
               ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.notifications_active_outlined),
+              title: const Text('Permiso de notificaciones'),
+              subtitle: const Text('Tócalo para volver a solicitarlo'),
+              onTap: () async {
+                final ok = await NotificationService()
+                    .requestNotificationPermissionOrOpenSettings();
+                if (!context.mounted) return;
+                final text = ok
+                    ? 'Permiso concedido'
+                    : 'Permiso denegado. Abre Ajustes si no aparece el diálogo.';
+                ScaffoldMessenger.of(context)
+                    .showSnackBar(SnackBar(content: Text(text)));
+              },
             ),
             const Spacer(),
             Padding(

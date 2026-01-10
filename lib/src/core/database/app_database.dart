@@ -20,6 +20,7 @@ class Notes extends Table {
   TextColumn get folderId => text().nullable().withDefault(const Constant(null))();
   BoolColumn get isPinned => boolean().withDefault(const Constant(false))();
   BoolColumn get isLocked => boolean().withDefault(const Constant(false))();
+  DateTimeColumn get reminderAt => dateTime().nullable()();
 
   @override
   Set<Column> get primaryKey => {id};
@@ -43,7 +44,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -82,6 +83,14 @@ class AppDatabase extends _$AppDatabase {
           // Column might already exist, ignore
         }
       }
+      if (from < 8) {
+        // Add reminderAt column to notes in version 8
+        try {
+          await m.addColumn(notes, notes.reminderAt as GeneratedColumn);
+        } catch (e) {
+          // Column might already exist, ignore
+        }
+      }
     },
   );
 
@@ -110,7 +119,7 @@ class AppDatabase extends _$AppDatabase {
 LazyDatabase _openConnection() {
   return LazyDatabase(() async {
     final dbFolder = await getApplicationDocumentsDirectory();
-    final file = File(p.join(dbFolder.path, 'notes_v7.sqlite'));
+    final file = File(p.join(dbFolder.path, 'notes_v8.sqlite'));
     return NativeDatabase.createInBackground(file);
   });
 }

@@ -49,7 +49,7 @@ class NotesProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> updateNote(String id, {String? title, String? content, String? folderId, bool replaceFolderId = false, bool? isPinned, String? color, bool? hasImage, bool? isLocked}) async {
+  Future<void> updateNote(String id, {String? title, String? content, String? folderId, bool replaceFolderId = false, bool? isPinned, String? color, bool? hasImage, bool? isLocked, DateTime? reminderAt}) async {
     final note = getNoteById(id);
     if (note != null) {
       // Si replaceFolderId es true, cambiar folderId aunque sea null
@@ -63,6 +63,7 @@ class NotesProvider extends ChangeNotifier {
         color: color,
         hasImage: hasImage,
         isLocked: isLocked,
+        reminderAt: reminderAt,
         updatedAt: DateTime.now(),
       );
 
@@ -79,6 +80,7 @@ class NotesProvider extends ChangeNotifier {
           folderId: updatedNote.folderId,
           isPinned: updatedNote.isPinned,
           isLocked: updatedNote.isLocked,
+          reminderAt: updatedNote.reminderAt,
         ),
       );
     }
@@ -98,6 +100,7 @@ class NotesProvider extends ChangeNotifier {
         folderId: note.folderId,
         isPinned: note.isPinned,
         isLocked: note.isLocked,
+        reminderAt: note.reminderAt,
       ),
     );
   }

@@ -19,6 +19,7 @@
   "moreOptions": "Mais Opções",
   "checklist": "Lista de Tarefas",
   "reminder": "Lembrete",
+  "disableReminder": "Desativar Lembrete",
   "lock": "Bloquear",
   "unlock": "Desbloquear",
   "share": "Compartilhar",
@@ -49,5 +50,7 @@
   "shortcutQuickVoice": "Nota de Voz Rápida",
   "shortcutQuickVoiceDesc": "Começar a gravar uma nota de voz instantaneamente",
   "processing": "Processando...",
-  "tapToCreateFirstNote": "Toque para criar sua primeira nota"
+  "tapToCreateFirstNote": "Toque para criar sua primeira nota",
+  "reminderNotificationTitle": "Lembrete de Nota",
+  "reminderNotificationBody": "Lembrete para a nota: {title}"
 }

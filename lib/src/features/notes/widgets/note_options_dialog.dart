@@ -9,6 +9,7 @@ class NoteOptionsDialog extends StatelessWidget {
   final VoidCallback? onShare;
   final VoidCallback? onAddToHomeScreen;
   final bool isLocked;
+  final bool hasReminder;
 
   const NoteOptionsDialog({
     super.key,
@@ -18,6 +19,7 @@ class NoteOptionsDialog extends StatelessWidget {
     this.onShare,
     this.onAddToHomeScreen,
     this.isLocked = false,
+    this.hasReminder = false,
   });
 
   @override
@@ -60,8 +62,9 @@ class NoteOptionsDialog extends StatelessWidget {
             const SizedBox(height: 16),
             _OptionItem(
               icon: Icons.notifications_none,
-              label: l10n.reminder,
+              label: hasReminder ? l10n.disableReminder : l10n.reminder,
               isDark: isDark,
+              isHighlight: hasReminder,
               onTap: () {
                 Navigator.of(context).pop();
                 onReminder?.call();
@@ -109,18 +112,22 @@ class _OptionItem extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
   final bool isDark;
+  final bool isHighlight;
 
   const _OptionItem({
     required this.icon,
     required this.label,
     required this.onTap,
     required this.isDark,
+    this.isHighlight = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final textColor = isDark ? colors.onSurface : Colors.black87;
+    final textColor = isHighlight 
+        ? Colors.amber 
+        : (isDark ? colors.onSurface : Colors.black87);
     
     return InkWell(
       onTap: onTap,
@@ -139,7 +146,7 @@ class _OptionItem extends StatelessWidget {
               label,
               style: GoogleFonts.inter(
                 fontSize: 16,
-                fontWeight: FontWeight.w400,
+                fontWeight: isHighlight ? FontWeight.w600 : FontWeight.w400,
                 color: textColor,
               ),
             ),

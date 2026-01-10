@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 class ReminderModal extends StatefulWidget {
   final DateTime? initialDateTime;
-  final Function(DateTime) onDateTimeSelected;
+  final Function(DateTime?) onDateTimeSelected;
 
   const ReminderModal({
     super.key,
@@ -61,12 +61,10 @@ class _ReminderModalState extends State<ReminderModal> {
                     ),
                   ),
                   TextButton(
-                    onPressed: selectedDateTime != null
-                        ? () {
-                            widget.onDateTimeSelected(selectedDateTime!);
-                            Navigator.of(context).pop();
-                          }
-                        : null,
+                    onPressed: () {
+                      widget.onDateTimeSelected(selectedDateTime);
+                      Navigator.of(context).pop();
+                    },
                     child: Text(
                       MaterialLocalizations.of(context).okButtonLabel,
                       style: TextStyle(

@@ -19,6 +19,7 @@
   "moreOptions": "Más Opciones",
   "checklist": "Lista de Tareas",
   "reminder": "Recordatorio",
+  "disableReminder": "Desactivar Recordatorio",
   "lock": "Bloquear",
   "unlock": "Desbloquear",
   "share": "Compartir",
@@ -49,5 +50,7 @@
   "shortcutQuickVoice": "Nota de Voz Rápida",
   "shortcutQuickVoiceDesc": "Comenzar a grabar una nota de voz al instante",
   "processing": "Procesando...",
-  "tapToCreateFirstNote": "Toca para crear tu primera nota"
+  "tapToCreateFirstNote": "Toca para crear tu primera nota",
+  "reminderNotificationTitle": "Recordatorio de Nota",
+  "reminderNotificationBody": "Recordatorio para la nota: {title}"
 }

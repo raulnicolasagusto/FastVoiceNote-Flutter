@@ -16,6 +16,7 @@ import '../widgets/reminder_modal.dart';
 import '../services/image_service.dart';
 import '../services/share_service.dart';
 import '../services/home_widget_service.dart';
+import '../../notifications/services/notification_service.dart';
 import '../models/checklist_item.dart';
 import '../models/checklist_utils.dart';
 import '../models/note.dart';
@@ -167,18 +168,39 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
   }
 
   void _showReminderModal() {
+    final note = context.read<NotesProvider>().getNoteById(widget.noteId);
+    final locale = Localizations.localeOf(context).languageCode;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       builder: (context) => ReminderModal(
-        onDateTimeSelected: (dateTime) {
-          final l10n = AppLocalizations.of(context)!;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Reminder set for ${DateFormat('MMM d, y h:mm a').format(dateTime)}'),
-              duration: const Duration(seconds: 3),
-            ),
-          );
+        onDateTimeSelected: (DateTime? dateTime) async {
+          if (dateTime != null) {
+            await context.read<NotesProvider>().updateNote(
+              widget.noteId,
+              reminderAt: dateTime,
+            );
+            await NotificationService().scheduleReminder(
+              noteId: widget.noteId,
+              title: note?.title ?? 'Untitled',
+              scheduledTime: dateTime!,
+              locale: locale,
+            );
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Reminder set for ${DateFormat('MMM d, y h:mm a').format(dateTime)}'),
+                  duration: const Duration(seconds: 3),
+                ),
+              );
+            }
+          } else {
+            await context.read<NotesProvider>().updateNote(
+              widget.noteId,
+              reminderAt: null,
+            );
+            await NotificationService().cancelReminder(widget.noteId);
+          }
         },
       ),
     );
@@ -204,6 +226,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
           }
         },
         isLocked: note?.isLocked ?? false,
+        hasReminder: (note?.reminderAt != null),
       ),
     );
   }
@@ -1112,6 +1135,27 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                           context,
                         ).textTheme.bodySmall?.copyWith(color: hintColor),
                       ),
+                      if (note.reminderAt != null) ...[
+                        const Spacer(),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.amber.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.notifications_active, size: 16, color: Colors.amber),
+                              const SizedBox(width: 6),
+                              Text(
+                                _formatReminderDate(note.reminderAt!, context),
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: hintColor),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                       if (!hasChecklist) ...[
                         const Spacer(),
                         Text(
@@ -1282,6 +1326,12 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
       ),
     ),
     );
+  }
+
+  String _formatReminderDate(DateTime dateTime, BuildContext context) {
+    final localeTag = Localizations.localeOf(context).toLanguageTag();
+    final formatter = DateFormat.yMd(localeTag).add_jm();
+    return formatter.format(dateTime);
   }
 }
 

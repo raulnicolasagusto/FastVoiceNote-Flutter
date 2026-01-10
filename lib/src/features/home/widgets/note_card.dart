@@ -8,6 +8,7 @@ class NoteCard extends StatelessWidget {
   final Color color;
   final bool hasImage;
   final bool hasVoice;
+  final bool hasReminder;
   final bool isSelected;
   final bool isPinned;
 
@@ -19,6 +20,7 @@ class NoteCard extends StatelessWidget {
     required this.color,
     this.hasImage = false,
     this.hasVoice = false,
+    this.hasReminder = false,
     this.isSelected = false,
     this.isPinned = false,
   });
@@ -78,7 +80,7 @@ class NoteCard extends StatelessWidget {
                   maxLines: 6,
                   overflow: TextOverflow.ellipsis,
                 ),
-                if (hasImage || hasVoice) ...[
+                if (hasImage || hasVoice || hasReminder) ...[
                   const SizedBox(height: 12),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
@@ -89,7 +91,12 @@ class NoteCard extends StatelessWidget {
                           child: Icon(Icons.image, size: 20, color: Colors.purple),
                         ),
                       if (hasVoice)
-                        const Icon(Icons.mic, size: 20, color: Colors.orange),
+                        const Padding(
+                          padding: EdgeInsets.only(right: 8.0),
+                          child: Icon(Icons.mic, size: 20, color: Colors.orange),
+                        ),
+                      if (hasReminder)
+                        const Icon(Icons.notifications_active, size: 20, color: Colors.redAccent),
                     ],
                   ),
                 ],

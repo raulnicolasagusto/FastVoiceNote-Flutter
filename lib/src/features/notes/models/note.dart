@@ -10,6 +10,7 @@ class Note {
   String? folderId;
   final bool isPinned;
   final bool isLocked;
+  DateTime? reminderAt;
 
   Note({
     required this.id,
@@ -23,6 +24,7 @@ class Note {
     this.folderId,
     this.isPinned = false,
     this.isLocked = false,
+    this.reminderAt,
   });
 
   Note copyWith({
@@ -37,6 +39,7 @@ class Note {
     String? folderId,
     bool? isPinned,
     bool? isLocked,
+    DateTime? reminderAt,
   }) {
     return Note(
       id: id ?? this.id,
@@ -50,6 +53,7 @@ class Note {
       folderId: folderId ?? this.folderId,
       isPinned: isPinned ?? this.isPinned,
       isLocked: isLocked ?? this.isLocked,
+      reminderAt: reminderAt ?? this.reminderAt,
     );
   }
 
@@ -66,6 +70,7 @@ class Note {
       folderId: entity.folderId,
       isPinned: entity.isPinned,
       isLocked: entity.isLocked,
+      reminderAt: entity.reminderAt,
     );
   }
 }
