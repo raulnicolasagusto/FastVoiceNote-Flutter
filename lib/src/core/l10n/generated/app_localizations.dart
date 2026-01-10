@@ -226,6 +226,12 @@ abstract class AppLocalizations {
   /// **'Disable Reminder'**
   String get disableReminder;
 
+  /// No description provided for @reminderDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder disabled'**
+  String get reminderDisabled;
+
   /// No description provided for @lock.
   ///
   /// In en, this message translates to:

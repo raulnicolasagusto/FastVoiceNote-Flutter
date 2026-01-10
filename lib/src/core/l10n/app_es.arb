@@ -20,6 +20,7 @@
   "checklist": "Lista de Tareas",
   "reminder": "Recordatorio",
   "disableReminder": "Desactivar Recordatorio",
+  "reminderDisabled": "Recordatorio desactivado",
   "lock": "Bloquear",
   "unlock": "Desbloquear",
   "share": "Compartir",

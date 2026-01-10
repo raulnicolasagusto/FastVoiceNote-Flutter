@@ -72,6 +72,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get disableReminder => 'Desactivar Recordatorio';
 
   @override
+  String get reminderDisabled => 'Recordatorio desactivado';
+
+  @override
   String get lock => 'Bloquear';
 
   @override

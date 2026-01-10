@@ -24,7 +24,7 @@ class NotificationService {
     tz_data.initializeTimeZones();
 
     const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+        AndroidInitializationSettings('ic_notification');
 
     const DarwinInitializationSettings initializationSettingsDarwin =
         DarwinInitializationSettings(
@@ -132,7 +132,7 @@ class NotificationService {
         channelDescription: 'Reminders for notes',
         importance: Importance.max,
         priority: Priority.high,
-        icon: '@mipmap/ic_launcher',
+        icon: 'ic_notification',
         enableVibration: true,
         playSound: true,
         fullScreenIntent: true,
@@ -229,7 +229,7 @@ class NotificationService {
         channelDescription: 'Reminders for notes',
         importance: Importance.max,
         priority: Priority.high,
-        icon: '@mipmap/ic_launcher',
+        icon: 'ic_notification',
         enableVibration: true,
         playSound: true,
       ),

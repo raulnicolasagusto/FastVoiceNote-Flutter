@@ -20,6 +20,7 @@
   "checklist": "Lista de Tarefas",
   "reminder": "Lembrete",
   "disableReminder": "Desativar Lembrete",
+  "reminderDisabled": "Lembrete desativado",
   "lock": "Bloquear",
   "unlock": "Desbloquear",
   "share": "Compartilhar",

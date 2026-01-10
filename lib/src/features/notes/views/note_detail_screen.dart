@@ -170,6 +170,14 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
   void _showReminderModal() {
     final note = context.read<NotesProvider>().getNoteById(widget.noteId);
     final locale = Localizations.localeOf(context).languageCode;
+    
+    // Si ya hay un recordatorio, desactivarlo directamente
+    if (note?.reminderAt != null) {
+      _disableReminder();
+      return;
+    }
+    
+    // Si no hay recordatorio, mostrar modal para crear uno
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -195,6 +203,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
               );
             }
           } else {
+            // Usuario canceló el modal
             await context.read<NotesProvider>().updateNote(
               widget.noteId,
               reminderAt: null,
@@ -202,6 +211,34 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
             await NotificationService().cancelReminder(widget.noteId);
           }
         },
+      ),
+    );
+  }
+
+  void _disableReminder() async {
+    // Obtener contexto y localización ANTES de operaciones async
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = AppLocalizations.of(context)!;
+    final provider = context.read<NotesProvider>();
+    
+    // Cerrar el diálogo
+    navigator.pop();
+    
+    // Cancelar el recordatorio en la base de datos con clearReminderAt
+    await provider.updateNote(
+      widget.noteId,
+      clearReminderAt: true,
+    );
+    
+    // Cancelar la notificación programada
+    await NotificationService().cancelReminder(widget.noteId);
+    
+    // Mostrar mensaje
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(l10n.reminderDisabled),
+        duration: const Duration(seconds: 2),
       ),
     );
   }

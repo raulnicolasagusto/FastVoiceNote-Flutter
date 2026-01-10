@@ -72,6 +72,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get disableReminder => 'Disable Reminder';
 
   @override
+  String get reminderDisabled => 'Reminder disabled';
+
+  @override
   String get lock => 'Lock';
 
   @override

@@ -40,6 +40,7 @@ class Note {
     bool? isPinned,
     bool? isLocked,
     DateTime? reminderAt,
+    bool clearReminderAt = false,
   }) {
     return Note(
       id: id ?? this.id,
@@ -53,7 +54,7 @@ class Note {
       folderId: folderId ?? this.folderId,
       isPinned: isPinned ?? this.isPinned,
       isLocked: isLocked ?? this.isLocked,
-      reminderAt: reminderAt ?? this.reminderAt,
+      reminderAt: clearReminderAt ? null : (reminderAt ?? this.reminderAt),
     );
   }
 

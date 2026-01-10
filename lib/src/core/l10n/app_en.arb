@@ -20,6 +20,7 @@
   "checklist": "Checklist",
   "reminder": "Reminder",
   "disableReminder": "Disable Reminder",
+  "reminderDisabled": "Reminder disabled",
   "lock": "Lock",
   "unlock": "Unlock",
   "share": "Share",

@@ -72,6 +72,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get disableReminder => 'Desativar Lembrete';
 
   @override
+  String get reminderDisabled => 'Lembrete desativado';
+
+  @override
   String get lock => 'Bloquear';
 
   @override
