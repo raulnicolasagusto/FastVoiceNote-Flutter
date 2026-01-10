@@ -429,6 +429,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Reminder for note: {title}'**
   String reminderNotificationBody(Object title);
+
+  /// No description provided for @reminderSetForToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder set for today at'**
+  String get reminderSetForToday;
+
+  /// No description provided for @reminderSetForDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder set for'**
+  String get reminderSetForDate;
 }
 
 class _AppLocalizationsDelegate

@@ -31,11 +31,21 @@ A powerful, AI-powered voice note-taking application built with **Flutter** that
 ### 🎨 **Rich Note Features**
 - **Color-coded notes** with 12 predefined color themes
 - **Pin favorites** for quick access
+- **Smart reminders** with scheduled notifications
 - **Image attachments** (camera or gallery)
 - **File attachments** with preview
 - **Search within notes** with text highlighting
 - **Share notes** as text or images
 - **Home screen widgets** for quick access
+
+### ⏰ **Smart Reminders & Notifications**
+- **Scheduled notifications** for time-sensitive notes
+- **On-device alarm scheduling** with exact timing
+- **Toggle on/off** - easily activate/deactivate reminders
+- **Persistent across reboots** - reminders survive device restarts
+- **Battery-optimized** - works with Android's Doze mode
+- **Custom notification icon** with Material Design
+- **Multi-language support** for reminder messages
 
 ### 🌍 **Complete Internationalization**
 - **3 languages fully supported**: English, Spanish, Portuguese
@@ -89,6 +99,8 @@ lib/
 │   │   │   ├── views/         # Detail screen
 │   │   │   ├── widgets/       # Checklist, Color picker, etc.
 │   │   │   └── services/      # Image, Share, Widget services
+│   │   ├── notifications/     # Reminder notifications
+│   │   │   └── services/      # Notification scheduling service
 │   │   ├── settings/          # Theme, Language, Tips
 │   │   └── transcription/     # Voice recording & processing
 │   │       ├── services/      # Audio recorder service
@@ -191,6 +203,42 @@ flutter build ios --release
 
 ## 🎯 Core Features Deep Dive
 
+### Smart Reminders & Notifications
+
+The app includes a robust notification system for time-based reminders:
+
+**Key Features:**
+- **Exact alarms** - Uses `AndroidScheduleMode.exactAllowWhileIdle` for precise timing
+- **Permission handling** - Automatically requests notification and alarm permissions on Android 13+
+- **Timezone aware** - Correctly handles timezone conversions using `timezone` package
+- **Boot persistence** - Reminders survive device restarts with `BOOT_COMPLETED` receiver
+- **Battery optimization** - Works with Android Doze mode using `WAKE_LOCK`
+- **Visual feedback** - Custom monochrome notification icon for Android standards
+
+**Architecture:**
+```
+Note with reminder → NotificationService → flutter_local_notifications
+        ↓                       ↓
+  Database (reminderAt)    Android AlarmManager
+        ↓                       ↓
+    Provider updates        Exact alarm scheduled
+        ↓                       ↓
+    UI refreshes           Notification fires at exact time
+```
+
+**Implementation Details:**
+- **Service:** `lib/src/features/notifications/services/notification_service.dart`
+- **Permissions:** `POST_NOTIFICATIONS`, `SCHEDULE_EXACT_ALARM`, `USE_EXACT_ALARM`, `WAKE_LOCK`
+- **Manifest receivers:** `ScheduledNotificationReceiver`, `ScheduledNotificationBootReceiver`
+- **Icon:** Custom `ic_notification.xml` drawable for proper Android notification appearance
+
+**User Flow:**
+1. Open note options → Select "Reminder"
+2. Pick date and time
+3. System schedules exact alarm
+4. At scheduled time, notification appears with note title
+5. To disable: Open options → "Disable Reminder" (no date picker, instant removal)
+
 ### Voice-to-Checklist Detection
 
 The app uses intelligent natural language processing to detect checklist intentions:
@@ -241,7 +289,8 @@ CREATE TABLE notes (
   has_voice INTEGER DEFAULT 0,
   is_pinned INTEGER DEFAULT 0,
   is_locked INTEGER DEFAULT 0,
-  folder_id TEXT
+  folder_id TEXT,
+  reminder_at INTEGER
 );
 
 CREATE TABLE attachments (

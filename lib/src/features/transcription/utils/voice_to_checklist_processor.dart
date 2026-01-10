@@ -241,10 +241,12 @@ class ProcessedTranscription {
   final String originalText;
   final bool isChecklist;
   final List<ChecklistItem> checklistItems;
+  final DateTime? reminderAt;
 
   ProcessedTranscription({
     required this.originalText,
     required this.isChecklist,
     this.checklistItems = const [],
+    this.reminderAt,
   });
 }

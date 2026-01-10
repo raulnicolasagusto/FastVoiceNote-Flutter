@@ -6,6 +6,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:record/record.dart';
 import '../../../core/transcription/whisper_bridge.dart';
 import '../utils/voice_to_checklist_processor.dart';
+import '../utils/voice_reminder_processor.dart';
 
 class AudioRecorderService {
   final AudioRecorder _audioRecorder = AudioRecorder();
@@ -67,11 +68,24 @@ class AudioRecorderService {
 
     // Cleanup
     await file.delete();
-    
+
     if (text.isEmpty) return null;
-    
+
     // Process transcription for automatic checklist detection
     final processed = VoiceToChecklistProcessor.processTranscription(text, _language);
+
+    // Detect reminder in transcribed text
+    final reminderInfo = VoiceReminderProcessor.detectReminder(text, _language);
+
+    if (reminderInfo.hasReminder) {
+      return ProcessedTranscription(
+        originalText: text,
+        isChecklist: processed.isChecklist,
+        checklistItems: processed.checklistItems,
+        reminderAt: reminderInfo.reminderTime,
+      );
+    }
+
     return processed;
   }
 

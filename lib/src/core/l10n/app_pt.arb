@@ -53,5 +53,7 @@
   "processing": "Processando...",
   "tapToCreateFirstNote": "Toque para criar sua primeira nota",
   "reminderNotificationTitle": "Lembrete de Nota",
-  "reminderNotificationBody": "Lembrete para a nota: {title}"
+  "reminderNotificationBody": "Lembrete para a nota: {title}",
+  "reminderSetForToday": "Lembrete ativado para hoje às",
+  "reminderSetForDate": "Lembrete ativado para"
 }

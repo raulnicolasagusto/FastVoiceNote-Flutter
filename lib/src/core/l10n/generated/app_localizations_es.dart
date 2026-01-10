@@ -181,4 +181,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String reminderNotificationBody(Object title) {
     return 'Recordatorio para la nota: $title';
   }
+
+  @override
+  String get reminderSetForToday => 'Recordatorio activado para hoy a las';
+
+  @override
+  String get reminderSetForDate => 'Recordatorio activado para el';
 }

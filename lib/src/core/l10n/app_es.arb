@@ -53,5 +53,7 @@
   "processing": "Procesando...",
   "tapToCreateFirstNote": "Toca para crear tu primera nota",
   "reminderNotificationTitle": "Recordatorio de Nota",
-  "reminderNotificationBody": "Recordatorio para la nota: {title}"
+  "reminderNotificationBody": "Recordatorio para la nota: {title}",
+  "reminderSetForToday": "Recordatorio activado para hoy a las",
+  "reminderSetForDate": "Recordatorio activado para el"
 }

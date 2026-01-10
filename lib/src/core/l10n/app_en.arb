@@ -53,5 +53,7 @@
   "processing": "Processing...",
   "tapToCreateFirstNote": "Tap to create your first note",
   "reminderNotificationTitle": "Note Reminder",
-  "reminderNotificationBody": "Reminder for note: {title}"
+  "reminderNotificationBody": "Reminder for note: {title}",
+  "reminderSetForToday": "Reminder set for today at",
+  "reminderSetForDate": "Reminder set for"
 }

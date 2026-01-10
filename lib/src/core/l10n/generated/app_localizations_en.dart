@@ -181,4 +181,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String reminderNotificationBody(Object title) {
     return 'Reminder for note: $title';
   }
+
+  @override
+  String get reminderSetForToday => 'Reminder set for today at';
+
+  @override
+  String get reminderSetForDate => 'Reminder set for';
 }

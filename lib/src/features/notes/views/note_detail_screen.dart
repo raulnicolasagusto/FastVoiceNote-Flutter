@@ -6,6 +6,7 @@ import '../../../core/l10n/generated/app_localizations.dart';
 import '../../transcription/services/audio_recorder_service.dart';
 import '../../transcription/widgets/recording_dialog.dart';
 import '../../transcription/utils/voice_add_to_note_processor.dart';
+import '../../transcription/utils/voice_reminder_processor.dart';
 import '../providers/notes_provider.dart';
 import '../widgets/note_options_dialog.dart';
 import '../widgets/checklist_widget.dart';
@@ -876,6 +877,12 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
         return;
       }
 
+      // Detect reminder in transcribed text
+      final reminderInfo = VoiceReminderProcessor.detectReminder(
+        transcriptionResult,
+        languageCode,
+      );
+
       // Process the transcription to determine what to do
       final hasChecklist = ChecklistUtils.hasChecklist(note.content);
       final result = VoiceAddToNoteProcessor.processAddToNote(
@@ -888,10 +895,10 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
         // User wants to add items to checklist
         final currentItems = ChecklistUtils.jsonToItems(note.content);
         final updatedItems = [...currentItems, ...result.itemsToAdd];
-        
+
         final originalText = ChecklistUtils.getText(note.content);
         final newContent = ChecklistUtils.itemsToJson(updatedItems, originalText);
-        
+
         await context.read<NotesProvider>().updateNote(
           widget.noteId,
           content: newContent,
@@ -906,25 +913,25 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
         }
       } else if (result.textToAdd.isNotEmpty) {
         // User wants to add text to note
-        final currentText = hasChecklist 
+        final currentText = hasChecklist
             ? ChecklistUtils.getText(note.content)
             : note.content;
-        
+
         // Append the new text with proper spacing
-        final newText = currentText.isEmpty 
+        final newText = currentText.isEmpty
             ? result.textToAdd
             : '$currentText\n\n${result.textToAdd}';
-        
+
         if (hasChecklist) {
           // Maintain checklist and update text part
           final items = ChecklistUtils.jsonToItems(note.content);
           final newContent = ChecklistUtils.itemsToJson(items, newText);
-          
+
           await context.read<NotesProvider>().updateNote(
             widget.noteId,
             content: newContent,
           );
-          
+
           setState(() {
             _contentController.text = newText;
           });
@@ -934,7 +941,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
             widget.noteId,
             content: newText,
           );
-          
+
           setState(() {
             _contentController.text = newText;
           });
@@ -943,6 +950,39 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Text added to note')),
+          );
+        }
+      }
+
+      // Handle reminder if detected
+      if (reminderInfo.hasReminder && mounted) {
+        final l10n = AppLocalizations.of(context)!;
+        final now = DateTime.now();
+        final isToday = reminderInfo.reminderTime.day == now.day &&
+            reminderInfo.reminderTime.month == now.month &&
+            reminderInfo.reminderTime.year == now.year;
+
+        await context.read<NotesProvider>().updateNote(
+          widget.noteId,
+          reminderAt: reminderInfo.reminderTime,
+        );
+
+        await NotificationService().scheduleReminder(
+          noteId: widget.noteId,
+          title: note?.title ?? 'Untitled',
+          scheduledTime: reminderInfo.reminderTime,
+          locale: locale.languageCode,
+        );
+
+        final timeFormat = DateFormat.Hm();
+        final formattedTime = timeFormat.format(reminderInfo.reminderTime);
+        final message = isToday
+            ? '${l10n.reminderSetForToday} $formattedTime'
+            : '${l10n.reminderSetForDate} ${DateFormat.yMd(locale.languageCode).format(reminderInfo.reminderTime)} $formattedTime';
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(message)),
           );
         }
       }

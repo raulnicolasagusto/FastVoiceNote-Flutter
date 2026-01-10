@@ -17,6 +17,7 @@ import '../../transcription/widgets/recording_dialog.dart';
 import '../../transcription/utils/voice_to_checklist_processor.dart';
 import '../../../core/utils/quick_voice_intent.dart';
 import 'package:vibration/vibration.dart';
+import '../../notifications/services/notification_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -643,12 +644,12 @@ class _HomeScreenState extends State<HomeScreen>
         final l10n = AppLocalizations.of(context)!;
         final now = DateTime.now();
         final id = now.millisecondsSinceEpoch.toString();
-        
+
         // Generate note content based on whether it's a checklist or regular text
         final noteContent = VoiceToChecklistProcessor.generateNoteContent(processed);
-        
+
         // Create appropriate title based on content type
-        final noteTitle = processed.isChecklist 
+        final noteTitle = processed.isChecklist
             ? '${l10n.checklist} ${DateFormat.Hm().format(now)}'
             : '${l10n.newNote} (Voice) ${DateFormat.Hm().format(now)}';
 
@@ -661,9 +662,38 @@ class _HomeScreenState extends State<HomeScreen>
           color: 'FFFFFFFF',
           hasVoice: true, // Mark as voice note source
           folderId: _getCurrentFolderId(),
+          reminderAt: processed.reminderAt,
         );
 
         context.read<NotesProvider>().addNote(newNote);
+
+        // Schedule notification if reminder was detected
+        if (newNote.reminderAt != null && mounted) {
+          final l10n = AppLocalizations.of(context)!;
+          final now = DateTime.now();
+          final isToday = newNote.reminderAt!.day == now.day &&
+              newNote.reminderAt!.month == now.month &&
+              newNote.reminderAt!.year == now.year;
+
+          await NotificationService().scheduleReminder(
+            noteId: newNote.id,
+            title: newNote.title,
+            scheduledTime: newNote.reminderAt!,
+            locale: locale.languageCode,
+          );
+
+          // Show feedback
+          final timeFormat = DateFormat.Hm();
+          final formattedTime = timeFormat.format(newNote.reminderAt!);
+          final message = isToday
+              ? '${l10n.reminderSetForToday} $formattedTime'
+              : '${l10n.reminderSetForDate} ${DateFormat.yMd(locale.languageCode).format(newNote.reminderAt!)} $formattedTime';
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(message)),
+          );
+        }
+
         context.push('/note/$id');
       }
     } catch (e) {
