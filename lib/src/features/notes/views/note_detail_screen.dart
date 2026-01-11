@@ -24,6 +24,7 @@ import '../models/note.dart';
 import '../../../core/database/app_database.dart';
 import '../../settings/services/tooltip_service.dart';
 import '../../settings/providers/settings_provider.dart';
+import '../services/ocr_service.dart';
 
 class NoteDetailScreen extends StatefulWidget {
   final String noteId;
@@ -40,7 +41,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
   bool _isEditingTitle = false;
   bool _isEditingContent = false;
   bool _isChecklistEditing = false;
-  
+
   // Search state
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
@@ -53,8 +54,9 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
   final ImageService _imageService = ImageService();
   final HomeWidgetService _homeWidgetService = HomeWidgetService();
   final TooltipService _tooltipService = TooltipService();
+  final OCRService _ocrService = OCRService();
   List<AttachmentEntity> _attachments = [];
-  
+
   // GlobalKey for date/chars row to show tooltip above it
   final GlobalKey _dateCharsKey = GlobalKey();
   bool _isShowingTooltip = false;
@@ -67,17 +69,17 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
     _titleController = TextEditingController(text: note?.title ?? '');
     // Si hay checklist, obtener solo el texto original
     final content = note?.content ?? '';
-    final textContent = ChecklistUtils.hasChecklist(content) 
-        ? ChecklistUtils.getText(content) 
+    final textContent = ChecklistUtils.hasChecklist(content)
+        ? ChecklistUtils.getText(content)
         : content;
     _contentController = TextEditingController(text: textContent);
-    
+
     _searchController.addListener(_onSearchChanged);
     _loadAttachments();
-    
+
     // Listen for settings changes
     context.read<SettingsProvider>().addListener(_onSettingsChanged);
-    
+
     // Show tooltips after a delay to let the UI fully render
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Future.delayed(const Duration(milliseconds: 800), () {
@@ -87,7 +89,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
       });
     });
   }
-  
+
   void _onSettingsChanged() {
     final settings = context.read<SettingsProvider>();
     // If tips were just enabled, reset and show tooltips
@@ -97,7 +99,9 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
   }
 
   Future<void> _loadAttachments() async {
-    final attachments = await context.read<NotesProvider>().getAttachments(widget.noteId);
+    final attachments = await context.read<NotesProvider>().getAttachments(
+      widget.noteId,
+    );
     setState(() {
       _attachments = attachments;
     });
@@ -111,6 +115,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
     _contentController.dispose();
     _searchController.dispose();
     _searchFocusNode.dispose();
+    _ocrService.dispose();
     super.dispose();
   }
 
@@ -121,7 +126,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
       setState(() => _isEditingTitle = false);
       return;
     }
-    
+
     if (_titleController.text.isNotEmpty) {
       await context.read<NotesProvider>().updateNote(
         widget.noteId,
@@ -142,11 +147,14 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
     }
 
     final hasChecklist = ChecklistUtils.hasChecklist(note.content);
-    
+
     if (hasChecklist) {
       // Si hay checklist, actualizar solo el texto manteniendo el checklist
       final items = ChecklistUtils.jsonToItems(note.content);
-      final newContent = ChecklistUtils.itemsToJson(items, _contentController.text);
+      final newContent = ChecklistUtils.itemsToJson(
+        items,
+        _contentController.text,
+      );
       await context.read<NotesProvider>().updateNote(
         widget.noteId,
         content: newContent,
@@ -158,7 +166,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
         content: _contentController.text,
       );
     }
-    
+
     setState(() => _isEditingContent = false);
   }
 
@@ -171,13 +179,13 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
   void _showReminderModal() {
     final note = context.read<NotesProvider>().getNoteById(widget.noteId);
     final locale = Localizations.localeOf(context).languageCode;
-    
+
     // Si ya hay un recordatorio, desactivarlo directamente
     if (note?.reminderAt != null) {
       _disableReminder();
       return;
     }
-    
+
     // Si no hay recordatorio, mostrar modal para crear uno
     showModalBottomSheet(
       context: context,
@@ -198,7 +206,9 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('Reminder set for ${DateFormat('MMM d, y h:mm a').format(dateTime)}'),
+                  content: Text(
+                    'Reminder set for ${DateFormat('MMM d, y h:mm a').format(dateTime)}',
+                  ),
                   duration: const Duration(seconds: 3),
                 ),
               );
@@ -222,19 +232,16 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
     final messenger = ScaffoldMessenger.of(context);
     final l10n = AppLocalizations.of(context)!;
     final provider = context.read<NotesProvider>();
-    
+
     // Cerrar el diálogo
     navigator.pop();
-    
+
     // Cancelar el recordatorio en la base de datos con clearReminderAt
-    await provider.updateNote(
-      widget.noteId,
-      clearReminderAt: true,
-    );
-    
+    await provider.updateNote(widget.noteId, clearReminderAt: true);
+
     // Cancelar la notificación programada
     await NotificationService().cancelReminder(widget.noteId);
-    
+
     // Mostrar mensaje
     messenger.showSnackBar(
       SnackBar(
@@ -246,7 +253,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
 
   void _showOptionsDialog() {
     final note = context.read<NotesProvider>().getNoteById(widget.noteId);
-    
+
     showDialog(
       context: context,
       builder: (context) => NoteOptionsDialog(
@@ -273,9 +280,9 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
     final l10n = AppLocalizations.of(context)!;
     final note = context.read<NotesProvider>().getNoteById(widget.noteId);
     final willBeLocked = !(note?.isLocked ?? false);
-    
+
     await context.read<NotesProvider>().toggleLock(widget.noteId);
-    
+
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -302,27 +309,27 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
       ),
     );
   }
-  
+
   Future<void> _checkAndShowTooltips() async {
     // Check if tips are enabled in settings
     final settings = context.read<SettingsProvider>();
     if (!settings.showTips) return;
-    
+
     // Check if tooltips were manually closed
     if (_tooltipsManuallyClosed) return;
-    
+
     // Check if we're already showing a tooltip
     if (_isShowingTooltip) return;
-    
+
     // Verify that the key has a valid context
     if (_dateCharsKey.currentContext == null) {
       return; // Exit if context is not ready
     }
-    
+
     if (!mounted) return;
     setState(() => _isShowingTooltip = true);
     final l10n = AppLocalizations.of(context)!;
-    
+
     // Show first tooltip (checklist voice)
     _tooltipService.showTooltip(
       context: context,
@@ -332,7 +339,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
         if (mounted) {
           setState(() => _isShowingTooltip = false);
         }
-        
+
         // If user closed manually, stop showing tooltips
         if (wasManual) {
           if (mounted) {
@@ -340,7 +347,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
           }
           return;
         }
-        
+
         // Show second tooltip after a brief delay (auto-dismiss)
         await Future.delayed(const Duration(milliseconds: 500));
         if (mounted && !_tooltipsManuallyClosed) {
@@ -350,7 +357,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
       duration: const Duration(seconds: 6),
     );
   }
-  
+
   void resetTooltips() {
     setState(() {
       _tooltipsManuallyClosed = false;
@@ -363,14 +370,14 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
       }
     });
   }
-  
+
   Future<void> _showReminderTooltip() async {
     final settings = context.read<SettingsProvider>();
     if (!settings.showTips || !mounted || _tooltipsManuallyClosed) return;
-    
+
     setState(() => _isShowingTooltip = true);
     final l10n = AppLocalizations.of(context)!;
-    
+
     _tooltipService.showTooltip(
       context: context,
       targetKey: _dateCharsKey,
@@ -379,7 +386,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
         if (mounted) {
           setState(() => _isShowingTooltip = false);
         }
-        
+
         // If user closed manually, stop showing tooltips
         if (wasManual) {
           if (mounted) {
@@ -387,7 +394,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
           }
           return;
         }
-        
+
         // Restart the tooltip loop after a brief delay (auto-dismiss)
         await Future.delayed(const Duration(milliseconds: 500));
         if (mounted && !_tooltipsManuallyClosed) {
@@ -449,12 +456,14 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
     try {
       // Check if the feature is supported
       final isSupported = await _homeWidgetService.isPinWidgetSupported();
-      
+
       if (!isSupported) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Add to Home Screen is not supported on this device'),
+              content: Text(
+                'Add to Home Screen is not supported on this device',
+              ),
               duration: Duration(seconds: 3),
             ),
           );
@@ -501,9 +510,9 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${e.toString()}')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
       }
     }
   }
@@ -514,7 +523,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
       _showLockedAlert();
       return;
     }
-    
+
     showDialog(
       context: context,
       builder: (context) => PhotoOptionsDialog(
@@ -526,7 +535,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
 
   Future<void> _takePicture() async {
     final imagePath = await _imageService.takePicture();
-    
+
     if (imagePath != null) {
       // Save attachment to database
       await context.read<NotesProvider>().addAttachment(
@@ -534,10 +543,10 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
         imagePath,
         'image',
       );
-      
+
       // Reload attachments
       await _loadAttachments();
-      
+
       // Show success feedback
       if (mounted) {
         final l10n = AppLocalizations.of(context)!;
@@ -586,7 +595,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
           'image',
         );
         await _loadAttachments();
-        
+
         if (mounted) {
           final l10n = AppLocalizations.of(context)!;
           ScaffoldMessenger.of(context).showSnackBar(
@@ -607,7 +616,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
           fileName: fileData['name'],
         );
         await _loadAttachments();
-        
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -625,13 +634,13 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
       _showLockedAlert();
       return;
     }
-    
+
     // Si ya hay checklist, solo activar modo edición y agregar un item nuevo
     if (ChecklistUtils.hasChecklist(note.content)) {
       setState(() {
         _isChecklistEditing = true;
       });
-      
+
       // Agregar un nuevo item vacío al final
       final currentItems = ChecklistUtils.jsonToItems(note.content);
       final newItem = ChecklistItem(
@@ -639,17 +648,20 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
         text: '',
       );
       currentItems.add(newItem);
-      
+
       // Actualizar con el nuevo item
       final originalText = ChecklistUtils.getText(note.content);
-      final checklistContent = ChecklistUtils.itemsToJson(currentItems, originalText);
+      final checklistContent = ChecklistUtils.itemsToJson(
+        currentItems,
+        originalText,
+      );
       await context.read<NotesProvider>().updateNote(
         widget.noteId,
         content: checklistContent,
       );
       return;
     }
-    
+
     // Si NO hay checklist, crear uno nuevo con el contenido actual como texto
     final baseText = note.content;
     final checklistContent = ChecklistUtils.addChecklistToContent(baseText);
@@ -686,7 +698,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
       return;
     }
 
-    // Mantener el texto original y actualizar el checklist
+    // Mantener el texto original and actualizar el checklist
     final originalText = ChecklistUtils.getText(note.content);
     final checklistContent = ChecklistUtils.itemsToJson(items, originalText);
     await context.read<NotesProvider>().updateNote(
@@ -723,14 +735,14 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
     if (note == null) return;
 
     int count = 0;
-    
+
     // Count in title
     count += _countMatches(note.title.toLowerCase(), _searchQuery);
-    
+
     // Count in text content
     final textContent = ChecklistUtils.getText(note.content).toLowerCase();
     count += _countMatches(textContent, _searchQuery);
-    
+
     // Count in checklist items
     if (ChecklistUtils.hasChecklist(note.content)) {
       final items = ChecklistUtils.jsonToItems(note.content);
@@ -741,7 +753,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
 
     _totalMatches = count;
     if (_currentMatchIndex > _totalMatches) {
-      _currentMatchIndex = _totalMatches > 0 ? 1 : 0;
+      _currentMatchIndex = (_currentMatchIndex % _totalMatches) + 1;
     } else if (_currentMatchIndex == 0 && _totalMatches > 0) {
       _currentMatchIndex = 1;
     }
@@ -783,12 +795,18 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
   void _previousMatch() {
     if (_totalMatches > 0) {
       setState(() {
-        _currentMatchIndex = _currentMatchIndex > 1 ? _currentMatchIndex - 1 : _totalMatches;
+        _currentMatchIndex = _currentMatchIndex > 1
+            ? _currentMatchIndex - 1
+            : _totalMatches;
       });
     }
   }
 
-  TextSpan _buildHighlightedText(String text, TextStyle? style, Color highlightColor) {
+  TextSpan _buildHighlightedText(
+    String text,
+    TextStyle? style,
+    Color highlightColor,
+  ) {
     if (_searchQuery.isEmpty) {
       return TextSpan(text: text, style: style);
     }
@@ -807,17 +825,21 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
 
       // Add text before match
       if (index > currentIndex) {
-        spans.add(TextSpan(text: text.substring(currentIndex, index), style: style));
+        spans.add(
+          TextSpan(text: text.substring(currentIndex, index), style: style),
+        );
       }
 
       // Add highlighted match
-      spans.add(TextSpan(
-        text: text.substring(index, index + _searchQuery.length),
-        style: style?.copyWith(
-          backgroundColor: highlightColor,
-          color: Colors.black87,
+      spans.add(
+        TextSpan(
+          text: text.substring(index, index + _searchQuery.length),
+          style: style?.copyWith(
+            backgroundColor: highlightColor,
+            color: Colors.black87,
+          ),
         ),
-      ));
+      );
 
       currentIndex = index + _searchQuery.length;
       matchIndex++;
@@ -843,7 +865,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
       final locale = Localizations.localeOf(context);
       final languageCode = locale.languageCode;
       recorderService.setLanguage(languageCode);
-      
+
       await recorderService.init();
 
       // Start recording
@@ -873,7 +895,9 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
         ),
       );
 
-      if (transcriptionResult == null || transcriptionResult.isEmpty || !mounted) {
+      if (transcriptionResult == null ||
+          transcriptionResult.isEmpty ||
+          !mounted) {
         return;
       }
 
@@ -897,7 +921,10 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
         final updatedItems = [...currentItems, ...result.itemsToAdd];
 
         final originalText = ChecklistUtils.getText(note.content);
-        final newContent = ChecklistUtils.itemsToJson(updatedItems, originalText);
+        final newContent = ChecklistUtils.itemsToJson(
+          updatedItems,
+          originalText,
+        );
 
         await context.read<NotesProvider>().updateNote(
           widget.noteId,
@@ -907,7 +934,9 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Added ${result.itemsToAdd.length} item(s) to checklist'),
+              content: Text(
+                'Added ${result.itemsToAdd.length} item(s) to checklist',
+              ),
             ),
           );
         }
@@ -948,9 +977,9 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
         }
 
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Text added to note')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Text added to note')));
         }
       }
 
@@ -958,7 +987,8 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
       if (reminderInfo.hasReminder && mounted) {
         final l10n = AppLocalizations.of(context)!;
         final now = DateTime.now();
-        final isToday = reminderInfo.reminderTime.day == now.day &&
+        final isToday =
+            reminderInfo.reminderTime.day == now.day &&
             reminderInfo.reminderTime.month == now.month &&
             reminderInfo.reminderTime.year == now.year;
 
@@ -981,20 +1011,91 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
             : '${l10n.reminderSetForDate} ${DateFormat.yMd(locale.languageCode).format(reminderInfo.reminderTime)} $formattedTime';
 
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(message)),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(message)));
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     } finally {
       recorderService.dispose();
     }
+  }
+
+  Future<void> _transcribeImage(String imagePath) async {
+    final note = context.read<NotesProvider>().getNoteById(widget.noteId);
+    if (note == null) return;
+    if (note.isLocked) {
+      _showLockedAlert();
+      return;
+    }
+
+    final l10n = AppLocalizations.of(context)!;
+
+    // Show transcribing indicator
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(l10n.transcribing),
+        duration: const Duration(seconds: 1),
+      ),
+    );
+
+    final extractedText = await _ocrService.extractText(imagePath);
+
+    if (!mounted) return;
+
+    if (extractedText == null || extractedText.trim().isEmpty) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          content: Text(l10n.noTextDetected),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(l10n.ok),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
+    // Append to note
+    final hasChecklist = ChecklistUtils.hasChecklist(note.content);
+    final currentText = hasChecklist
+        ? ChecklistUtils.getText(note.content)
+        : note.content;
+
+    final newText = currentText.isEmpty
+        ? extractedText
+        : '$currentText\n\n$extractedText';
+
+    if (hasChecklist) {
+      final items = ChecklistUtils.jsonToItems(note.content);
+      final newContent = ChecklistUtils.itemsToJson(items, newText);
+      await context.read<NotesProvider>().updateNote(
+        widget.noteId,
+        content: newContent,
+      );
+    } else {
+      await context.read<NotesProvider>().updateNote(
+        widget.noteId,
+        content: newText,
+      );
+    }
+
+    setState(() {
+      _contentController.text = newText;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Transcription added to note')),
+    );
   }
 
   void _showColorPicker() {
@@ -1037,13 +1138,17 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
     // Get note color
     final noteColor = Color(int.parse('0x${note.color}'));
     // Determine text color based on background luminance (NOT theme mode)
-    final textColor = noteColor.computeLuminance() > 0.5 ? Colors.black87 : Colors.white;
+    final textColor = noteColor.computeLuminance() > 0.5
+        ? Colors.black87
+        : Colors.white;
     // Determine icon color
-    final iconColor = noteColor.computeLuminance() > 0.5 ? Colors.black87 : Colors.white;
+    final iconColor = noteColor.computeLuminance() > 0.5
+        ? Colors.black87
+        : Colors.white;
     // Determine hint/secondary color
-    final hintColor = noteColor.computeLuminance() > 0.5 
-        ? Colors.black54 
-        : Colors.white.withValues(alpha: 0.6);
+    final hintColor = noteColor.computeLuminance() > 0.5
+        ? Colors.black54
+        : Colors.white.withOpacity(0.6);
 
     return Theme(
       data: Theme.of(context).copyWith(
@@ -1058,7 +1163,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
         ),
         textSelectionTheme: TextSelectionThemeData(
           cursorColor: textColor,
-          selectionColor: textColor.withValues(alpha: 0.3),
+          selectionColor: textColor.withOpacity(0.3),
           selectionHandleColor: textColor,
         ),
       ),
@@ -1068,331 +1173,388 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
           child: Column(
             children: [
               // Top Action Bar
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 4.0,
-                vertical: 8.0,
-              ),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                  IconButton(
-                    icon: Icon(
-                      note.isPinned ? Icons.star : Icons.star_border,
-                      color: note.isPinned ? Colors.amber : iconColor,
-                    ),
-                    onPressed: () {
-                      context.read<NotesProvider>().togglePin(widget.noteId);
-                    },
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.camera_alt_outlined),
-                    onPressed: _showPhotoOptions,
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.mic_none),
-                    onPressed: _onVoiceRecording,
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.palette_outlined),
-                    onPressed: _showColorPicker,
-                  ),
-                  const Spacer(),
-                  Builder(
-                    builder: (context) {
-                      final note = context.watch<NotesProvider>().getNoteById(widget.noteId);
-                      final hasChecklist = note != null && ChecklistUtils.hasChecklist(note.content);
-                      
-                      return IconButton(
-                        icon: const Icon(Icons.check),
-                        onPressed: (_isEditingTitle || _isEditingContent || (hasChecklist && _isChecklistEditing))
-                            ? () {
-                                if (hasChecklist) {
-                                  _toggleChecklistEdit();
-                                } else {
-                                  _onDoneEditing();
-                                }
-                              }
-                            : hasChecklist
-                                ? _toggleChecklistEdit
-                                : null,
-                      );
-                    },
-                  ),
-                  if (!_isSearching) ...[
-                    IconButton(
-                      icon: const Icon(Icons.search),
-                      onPressed: _toggleSearch,
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.more_vert),
-                      onPressed: _showOptionsDialog,
-                    ),
-                  ] else ...[
-                    // Search navigation buttons
-                    if (_totalMatches > 0) ...[
-                      IconButton(
-                        icon: const Icon(Icons.keyboard_arrow_up),
-                        onPressed: _previousMatch,
-                        iconSize: 20,
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.keyboard_arrow_down),
-                        onPressed: _nextMatch,
-                        iconSize: 20,
-                      ),
-                    ],
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: _toggleSearch,
-                    ),
-                  ],
-                ],
-              ),
-            ),
-
-            // Search bar or Date and character count
-            if (_isSearching)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 4.0,
+                  vertical: 8.0,
+                ),
                 child: Row(
                   children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _searchController,
-                        focusNode: _searchFocusNode,
-                        autofocus: true,
-                        style: TextStyle(color: textColor),
-                        decoration: InputDecoration(
-                          hintText: 'Search in note...',
-                          hintStyle: TextStyle(color: hintColor),
-                          border: InputBorder.none,
-                          prefixIcon: Icon(Icons.search, color: iconColor),
-                        ),
-                      ),
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back),
+                      onPressed: () => Navigator.of(context).pop(),
                     ),
-                    if (_totalMatches > 0)
-                      Text(
-                        '$_currentMatchIndex/$_totalMatches',
-                        style: TextStyle(color: hintColor, fontSize: 14),
+                    IconButton(
+                      icon: Icon(
+                        note.isPinned ? Icons.star : Icons.star_border,
+                        color: note.isPinned ? Colors.amber : iconColor,
                       ),
-                  ],
-                ),
-              )
-            else
-              // Date and character count
-              Builder(
-              key: _dateCharsKey,  // Add key here for tooltip positioning
-              builder: (context) {
-                final hasChecklist = ChecklistUtils.hasChecklist(note.content);
-                final textContent = ChecklistUtils.getText(note.content);
-                int charCount = textContent.length;
-                if (hasChecklist) {
-                  final items = ChecklistUtils.jsonToItems(note.content);
-                  charCount += items.fold(0, (sum, item) => sum + item.text.length);
-                }
-                
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Row(
-                    children: [
-                      Text(
-                        DateFormat('MMM d, yyyy').format(note.updatedAt),
-                        style: Theme.of(
-                          context,
-                        ).textTheme.bodySmall?.copyWith(color: hintColor),
-                      ),
-                      const SizedBox(width: 16),
-                      Text(
-                        '$charCount chars',
-                        style: Theme.of(
-                          context,
-                        ).textTheme.bodySmall?.copyWith(color: hintColor),
-                      ),
-                      if (note.reminderAt != null) ...[
-                        const Spacer(),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.amber.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.notifications_active, size: 16, color: Colors.amber),
-                              const SizedBox(width: 6),
-                              Text(
-                                _formatReminderDate(note.reminderAt!, context),
-                                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: hintColor),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                );
-              },
-            ),
-
-            const SizedBox(height: 24),
-
-            // Content Area
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Title
-                    GestureDetector(
-                      onTap: () {
-                        if (note.isLocked) {
-                          _showLockedAlert();
-                        } else {
-                          setState(() => _isEditingTitle = true);
-                        }
+                      onPressed: () {
+                        context.read<NotesProvider>().togglePin(widget.noteId);
                       },
-                      child: _isEditingTitle
-                          ? TextField(
-                              controller: _titleController,
-                              autofocus: true,
-                              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: textColor,
-                              ),
-                              decoration: InputDecoration(
-                                border: InputBorder.none,
-                                hintText: 'Title',
-                                hintStyle: TextStyle(color: hintColor),
-                              ),
-                              onSubmitted: (_) => _saveTitle(),
-                              onTapOutside: (_) => _saveTitle(),
-                            )
-                          : RichText(
-                              text: _buildHighlightedText(
-                                note.title,
-                                Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: textColor,
-                                ),
-                                Colors.yellow.shade300,
-                              ),
-                            ),
                     ),
-
-                    const SizedBox(height: 16),
-
-                    // Content and/or Checklist
+                    IconButton(
+                      icon: const Icon(Icons.camera_alt_outlined),
+                      onPressed: _showPhotoOptions,
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.mic_none),
+                      onPressed: _onVoiceRecording,
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.palette_outlined),
+                      onPressed: _showColorPicker,
+                    ),
+                    const Spacer(),
                     Builder(
                       builder: (context) {
-                        final hasChecklist = ChecklistUtils.hasChecklist(note.content);
-                        final textContent = ChecklistUtils.getText(note.content);
-                        final isEditingContent = _isEditingContent;
-                        
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Text content (siempre visible, puede estar vacío)
-                            GestureDetector(
-                              onTap: () {
-                                if (note.isLocked) {
-                                  _showLockedAlert();
-                                } else {
-                                  setState(() => _isEditingContent = true);
+                        final note = context.watch<NotesProvider>().getNoteById(
+                          widget.noteId,
+                        );
+                        final hasChecklist =
+                            note != null &&
+                            ChecklistUtils.hasChecklist(note.content);
+
+                        return IconButton(
+                          icon: const Icon(Icons.check),
+                          onPressed:
+                              (_isEditingTitle ||
+                                  _isEditingContent ||
+                                  (hasChecklist && _isChecklistEditing))
+                              ? () {
+                                  if (hasChecklist) {
+                                    _toggleChecklistEdit();
+                                  } else {
+                                    _onDoneEditing();
+                                  }
                                 }
-                              },
-                              child: isEditingContent
-                                  ? TextField(
-                                      controller: _contentController,
-                                      autofocus: true,
-                                      maxLines: null,
-                                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                        color: textColor,
-                                      ),
-                                      decoration: InputDecoration(
-                                        border: InputBorder.none,
-                                        hintText: 'Note',
-                                        hintStyle: TextStyle(color: hintColor),
-                                      ),
-                                      onTapOutside: (_) => _saveContent(),
-                                      onSubmitted: (_) => _saveContent(),
-                                    )
-                                  : textContent.isNotEmpty || !hasChecklist
-                                  ? RichText(
-                                           text: _buildHighlightedText(
-                                             textContent.isEmpty ? AppLocalizations.of(context)!.tapToAddContent : textContent,
-                                            Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                              color: textContent.isEmpty ? hintColor : textColor,
-                                            ),
-                                            Colors.yellow.shade300,
-                                          ),
-                                        )
-                                      : const SizedBox.shrink(),
-                            ),
-                            
-                            // Checklist (si existe)
-                            if (hasChecklist) ...[
-                              if (textContent.isNotEmpty) const SizedBox(height: 24),
-                              ChecklistWidget(
-                                items: ChecklistUtils.jsonToItems(note.content),
-                                isEditing: _isChecklistEditing,
-                                onItemsChanged: _onChecklistItemsChanged,
-                                onEditModeRequested: _toggleChecklistEdit,
-                                searchQuery: _searchQuery,
-                              ),
-                            ],
-                          ],
+                              : hasChecklist
+                              ? _toggleChecklistEdit
+                              : null,
                         );
                       },
                     ),
-
-                    // Attachments Gallery
-                    if (_attachments.isNotEmpty) ...[
-                      const SizedBox(height: 24),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: _attachments.map((attachment) {
-                          if (attachment.type == 'image') {
-                            return _ImageThumbnail(
-                              imagePath: attachment.filePath,
-                              textColor: textColor,
-                              onDelete: () async {
-                                await context.read<NotesProvider>().deleteAttachment(attachment.id);
-                                await _imageService.deleteImage(attachment.filePath);
-                                await _loadAttachments();
-                              },
-                            );
-                          } else {
-                            return _FileThumbnail(
-                              filePath: attachment.filePath,
-                              fileName: attachment.fileName ?? 'Unknown',
-                              textColor: textColor,
-                              onDelete: () async {
-                                await context.read<NotesProvider>().deleteAttachment(attachment.id);
-                                await _imageService.deleteImage(attachment.filePath);
-                                await _loadAttachments();
-                              },
-                            );
-                          }
-                        }).toList(),
+                    if (!_isSearching) ...[
+                      IconButton(
+                        icon: const Icon(Icons.search),
+                        onPressed: _toggleSearch,
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.more_vert),
+                        onPressed: _showOptionsDialog,
+                      ),
+                    ] else ...[
+                      // Search navigation buttons
+                      if (_totalMatches > 0) ...[
+                        IconButton(
+                          icon: const Icon(Icons.keyboard_arrow_up),
+                          onPressed: _previousMatch,
+                          iconSize: 20,
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.keyboard_arrow_down),
+                          onPressed: _nextMatch,
+                          iconSize: 20,
+                        ),
+                      ],
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: _toggleSearch,
                       ),
                     ],
-
-                    const SizedBox(height: 100),
                   ],
                 ),
               ),
-            ),
-          ],
+
+              // Search bar or Date and character count
+              if (_isSearching)
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0,
+                    vertical: 8.0,
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _searchController,
+                          focusNode: _searchFocusNode,
+                          autofocus: true,
+                          style: TextStyle(color: textColor),
+                          decoration: InputDecoration(
+                            hintText: 'Search in note...',
+                            hintStyle: TextStyle(color: hintColor),
+                            border: InputBorder.none,
+                            prefixIcon: Icon(Icons.search, color: iconColor),
+                          ),
+                        ),
+                      ),
+                      if (_totalMatches > 0)
+                        Text(
+                          '$_currentMatchIndex/$_totalMatches',
+                          style: TextStyle(color: hintColor, fontSize: 14),
+                        ),
+                    ],
+                  ),
+                )
+              else
+                // Date and character count
+                Builder(
+                  key: _dateCharsKey, // Add key here for tooltip positioning
+                  builder: (context) {
+                    final hasChecklist = ChecklistUtils.hasChecklist(
+                      note.content,
+                    );
+                    final textContent = ChecklistUtils.getText(note.content);
+                    int charCount = textContent.length;
+                    if (hasChecklist) {
+                      final items = ChecklistUtils.jsonToItems(note.content);
+                      charCount += items.fold(
+                        0,
+                        (sum, item) => sum + item.text.length,
+                      );
+                    }
+
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Row(
+                        children: [
+                          Text(
+                            DateFormat('MMM d, yyyy').format(note.updatedAt),
+                            style: Theme.of(
+                              context,
+                            ).textTheme.bodySmall?.copyWith(color: hintColor),
+                          ),
+                          const SizedBox(width: 16),
+                          Text(
+                            '$charCount chars',
+                            style: Theme.of(
+                              context,
+                            ).textTheme.bodySmall?.copyWith(color: hintColor),
+                          ),
+                          if (note.reminderAt != null) ...[
+                            const Spacer(),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.amber.withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.notifications_active,
+                                    size: 16,
+                                    color: Colors.amber,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    _formatReminderDate(
+                                      note.reminderAt!,
+                                      context,
+                                    ),
+                                    style: Theme.of(context).textTheme.bodySmall
+                                        ?.copyWith(color: hintColor),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    );
+                  },
+                ),
+
+              const SizedBox(height: 24),
+
+              // Content Area
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Title
+                      GestureDetector(
+                        onTap: () {
+                          if (note.isLocked) {
+                            _showLockedAlert();
+                          } else {
+                            setState(() => _isEditingTitle = true);
+                          }
+                        },
+                        child: _isEditingTitle
+                            ? TextField(
+                                controller: _titleController,
+                                autofocus: true,
+                                style: Theme.of(context).textTheme.headlineSmall
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: textColor,
+                                    ),
+                                decoration: InputDecoration(
+                                  border: InputBorder.none,
+                                  hintText: 'Title',
+                                  hintStyle: TextStyle(color: hintColor),
+                                ),
+                                onSubmitted: (_) => _saveTitle(),
+                                onTapOutside: (_) => _saveTitle(),
+                              )
+                            : RichText(
+                                text: _buildHighlightedText(
+                                  note.title,
+                                  Theme.of(
+                                    context,
+                                  ).textTheme.headlineSmall?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: textColor,
+                                  ),
+                                  Colors.yellow.shade300,
+                                ),
+                              ),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // Content and/or Checklist
+                      Builder(
+                        builder: (context) {
+                          final hasChecklist = ChecklistUtils.hasChecklist(
+                            note.content,
+                          );
+                          final textContent = ChecklistUtils.getText(
+                            note.content,
+                          );
+                          final isEditingContent = _isEditingContent;
+
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Text content (siempre visible, puede estar vacío)
+                              GestureDetector(
+                                onTap: () {
+                                  if (note.isLocked) {
+                                    _showLockedAlert();
+                                  } else {
+                                    setState(() => _isEditingContent = true);
+                                  }
+                                },
+                                child: isEditingContent
+                                    ? TextField(
+                                        controller: _contentController,
+                                        autofocus: true,
+                                        maxLines: null,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyLarge
+                                            ?.copyWith(color: textColor),
+                                        decoration: InputDecoration(
+                                          border: InputBorder.none,
+                                          hintText: 'Note',
+                                          hintStyle: TextStyle(
+                                            color: hintColor,
+                                          ),
+                                        ),
+                                        onTapOutside: (_) => _saveContent(),
+                                        onSubmitted: (_) => _saveContent(),
+                                      )
+                                    : textContent.isNotEmpty || !hasChecklist
+                                    ? RichText(
+                                        text: _buildHighlightedText(
+                                          textContent.isEmpty
+                                              ? AppLocalizations.of(
+                                                  context,
+                                                )!.tapToAddContent
+                                              : textContent,
+                                          Theme.of(
+                                            context,
+                                          ).textTheme.bodyLarge?.copyWith(
+                                            color: textContent.isEmpty
+                                                ? hintColor
+                                                : textColor,
+                                          ),
+                                          Colors.yellow.shade300,
+                                        ),
+                                      )
+                                    : const SizedBox.shrink(),
+                              ),
+
+                              // Checklist (si existe)
+                              if (hasChecklist) ...[
+                                if (textContent.isNotEmpty)
+                                  const SizedBox(height: 24),
+                                ChecklistWidget(
+                                  items: ChecklistUtils.jsonToItems(
+                                    note.content,
+                                  ),
+                                  isEditing: _isChecklistEditing,
+                                  onItemsChanged: _onChecklistItemsChanged,
+                                  onEditModeRequested: _toggleChecklistEdit,
+                                  searchQuery: _searchQuery,
+                                ),
+                              ],
+                            ],
+                          );
+                        },
+                      ),
+
+                      // Attachments Gallery
+                      if (_attachments.isNotEmpty) ...[
+                        const SizedBox(height: 24),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 16,
+                          children: _attachments.map((attachment) {
+                            if (attachment.type == 'image') {
+                              return _ImageThumbnail(
+                                imagePath: attachment.filePath,
+                                textColor: textColor,
+                                onDelete: () async {
+                                  await context
+                                      .read<NotesProvider>()
+                                      .deleteAttachment(attachment.id);
+                                  await _imageService.deleteImage(
+                                    attachment.filePath,
+                                  );
+                                  await _loadAttachments();
+                                },
+                                onTranscribe: () =>
+                                    _transcribeImage(attachment.filePath),
+                              );
+                            } else {
+                              return _FileThumbnail(
+                                filePath: attachment.filePath,
+                                fileName: attachment.fileName ?? 'Unknown',
+                                textColor: textColor,
+                                onDelete: () async {
+                                  await context
+                                      .read<NotesProvider>()
+                                      .deleteAttachment(attachment.id);
+                                  await _imageService.deleteImage(
+                                    attachment.filePath,
+                                  );
+                                  await _loadAttachments();
+                                },
+                              );
+                            }
+                          }).toList(),
+                        ),
+                      ],
+
+                      const SizedBox(height: 100),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
-    ),
     );
   }
 
@@ -1407,41 +1569,67 @@ class _ImageThumbnail extends StatelessWidget {
   final String imagePath;
   final Color textColor;
   final VoidCallback onDelete;
+  final VoidCallback onTranscribe;
 
   const _ImageThumbnail({
     required this.imagePath,
     required this.textColor,
     required this.onDelete,
+    required this.onTranscribe,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
+    return Column(
       children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: Image.file(
-            File(imagePath),
-            width: 150,
-            height: 150,
-            fit: BoxFit.cover,
-          ),
-        ),
-        Positioned(
-          top: 4,
-          right: 4,
-          child: GestureDetector(
-            onTap: onDelete,
-            child: Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: Colors.black54,
-                shape: BoxShape.circle,
+        Stack(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.file(
+                File(imagePath),
+                width: 150,
+                height: 150,
+                fit: BoxFit.cover,
               ),
-              child: Icon(
-                Icons.close,
-                size: 16,
+            ),
+            Positioned(
+              top: 4,
+              right: 4,
+              child: GestureDetector(
+                onTap: onDelete,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: const BoxDecoration(
+                    color: Colors.black54,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.close, size: 16, color: Colors.white),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        GestureDetector(
+          onTap: onTranscribe,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Colors.blue, Colors.purple],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              AppLocalizations.of(context)!.transcribe.toUpperCase(),
+              style: const TextStyle(
                 color: Colors.white,
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.5,
               ),
             ),
           ),
@@ -1552,15 +1740,11 @@ class _FileThumbnail extends StatelessWidget {
             onTap: onDelete,
             child: Container(
               padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: Colors.black54,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
-                Icons.close,
-                size: 16,
-                color: Colors.white,
-              ),
+              child: const Icon(Icons.close, size: 16, color: Colors.white),
             ),
           ),
         ),

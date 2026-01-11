@@ -28,6 +28,18 @@ A powerful, AI-powered voice note-taking application built with **Flutter** that
 - **Seamless text appending** for regular notes
 - **Voice integration** from note detail view
 
+### 🎙️ **Meeting Recording (Long-form Audio)**
+- **Smart chunking** - Audio divided into 20-second segments with 2-second overlap
+- **Resilient processing** - Continues transcription even if chunks fail (marks `[inaudible]`)
+- **Auto-stop at 1 hour** - Maximum recording duration enforced automatically
+- **Real-time timer** - Visible countdown during recording (HH:MM:SS format)
+- **Progress tracking** - Shows "Processing chunk X of Y" during transcription
+- **Quality metrics** - Displays transcription success percentage at the end
+- **Full transcription** - Generates complete meeting transcript with metadata
+- **Meeting details** - Includes duration, audio segments processed, and quality score
+- **Language-aware** - Uses app's selected language (EN/ES/PT) from settings
+- **Error recovery** - Never aborts due to single chunk failures
+
 ### 🎨 **Rich Note Features**
 - **Color-coded notes** with 12 predefined color themes
 - **Pin favorites** for quick access
@@ -84,31 +96,31 @@ A powerful, AI-powered voice note-taking application built with **Flutter** that
 
 ```
 lib/
-├── src/
-│   ├── core/
-│   │   ├── database/          # Drift database implementation
-│   │   ├── l10n/              # Localization files (3 languages)
-│   │   ├── router/            # GoRouter configuration
-│   │   ├── theme/             # Material 3 themes
-│   │   └── transcription/     # Whisper FFI bridge
-│   ├── features/
-│   │   ├── home/              # Home screen with note grid
-│   │   ├── notes/             # Note CRUD operations
-│   │   │   ├── models/        # Note, Checklist models
-│   │   │   ├── providers/     # State management
-│   │   │   ├── views/         # Detail screen
-│   │   │   ├── widgets/       # Checklist, Color picker, etc.
-│   │   │   └── services/      # Image, Share, Widget services
-│   │   ├── notifications/     # Reminder notifications
-│   │   │   └── services/      # Notification scheduling service
-│   │   ├── settings/          # Theme, Language, Tips
-│   │   └── transcription/     # Voice recording & processing
-│   │       ├── services/      # Audio recorder service
-│   │       ├── utils/         # Checklist & Add-to-note processors
-│   │       └── widgets/       # Recording dialog
-│   └── shared/
-│       └── widgets/           # Reusable components (Drawer, etc.)
-└── main.dart                  # App entry point
+ ├── src/
+ │   ├── core/
+ │   │   ├── database/          # Drift database implementation
+ │   │   ├── l10n/              # Localization files (3 languages)
+ │   │   ├── router/            # GoRouter configuration
+ │   │   ├── theme/             # Material 3 themes
+ │   │   └── transcription/     # Whisper FFI bridge
+ │   ├── features/
+ │   │   ├── home/              # Home screen with note grid
+ │   │   ├── notes/             # Note CRUD operations
+ │   │   │   ├── models/        # Note, Checklist models
+ │   │   │   ├── providers/     # State management
+ │   │   │   ├── views/         # Detail screen
+ │   │   │   ├── widgets/       # Checklist, Color picker, etc.
+ │   │   │   └── services/      # Image, Share, Widget services
+ │   │   ├── notifications/     # Reminder notifications
+ │   │   │   └── services/      # Notification scheduling service
+ │   │   ├── settings/          # Theme, Language, Tips
+ │   │   └── transcription/     # Voice recording & processing
+ │   │       ├── services/      # Audio recorder & Meeting recorder services
+ │   │       ├── utils/         # Checklist, Add-to-note, Audio chunker, Meeting processors
+ │   │       └── widgets/       # Recording dialog
+ │   └── shared/
+ │       └── widgets/           # Reusable components (Drawer, etc.)
+ └── main.dart                  # App entry point
 
 native/
 ├── native_lib.cpp             # C++ FFI wrapper for Whisper
@@ -248,6 +260,41 @@ The app uses intelligent natural language processing to detect checklist intenti
 - **Spanish**: "nueva lista", "lista de compras", "lista del super", etc.
 - **Portuguese**: "nova lista", "lista de compras", "lista do mercado", etc.
 
+### Meeting Recording & Transcription
+
+For long-form audio recordings (up to 1 hour), the app uses intelligent chunking:
+
+**Architecture:**
+```
+Recording (up to 1 hour)
+         ↓
+Stop (manual or auto)
+         ↓
+Audio chunking (20s chunks + 2s overlap)
+         ↓
+Chunk-by-chunk transcription with Whisper
+         ↓
+Resilient error handling (continue on failures)
+         ↓
+Concatenate + metadata generation
+         ↓
+Create note with full transcription
+```
+
+**Key Features:**
+- **Chunk Duration**: 20 seconds per segment
+- **Overlap**: 2 seconds between chunks (prevents cut words)
+- **Sample Rate**: 16,000 Hz (Whisper native format)
+- **Max Duration**: 1 hour (auto-stop enforced)
+- **Error Handling**: Marks failed chunks as `[inaudible]` and continues
+- **Progress Tracking**: Real-time UI feedback during processing
+- **Quality Scoring**: Calculates % of successfully transcribed chunks
+
+**Files:**
+- Service: `lib/src/features/transcription/services/meeting_recorder_service.dart`
+- Chunking: `lib/src/features/transcription/utils/audio_chunker.dart`
+- Processing: `lib/src/features/transcription/utils/meeting_transcription_processor.dart`
+
 **Example Flow:**
 ```
 User says: "new list apples, milk, bread, and eggs"
@@ -266,6 +313,7 @@ Creates interactive checklist note
 **Architecture:**
 ```
 Flutter UI → AudioRecorderService → WhisperBridge → FFI → native_lib.cpp → whisper.cpp → Model
+Flutter UI → MeetingRecorderService → AudioChunker → MeetingTranscriptionProcessor → WhisperBridge
 ```
 
 **Key Features:**
@@ -274,6 +322,8 @@ Flutter UI → AudioRecorderService → WhisperBridge → FFI → native_lib.cpp
 - Thread-safe FFI calls with mutex protection
 - Efficient memory management with calloc/free
 - Language-specific transcription (en/es/pt)
+- Smart chunking with overlap for long recordings
+- Resilient error handling (never aborts on single chunk failures)
 
 ### Database Schema
 

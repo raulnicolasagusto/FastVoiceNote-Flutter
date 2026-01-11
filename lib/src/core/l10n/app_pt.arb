@@ -74,5 +74,8 @@
   "meetingMetadataTitle": "Metadados da Reunião",
   "meetingDuration": "Duração",
   "meetingChunks": "Fragmentos",
-  "meetingQuality": "Qualidade"
+  "meetingQuality": "Qualidade",
+  "transcribe": "TRANSCREVER",
+  "noTextDetected": "Nenhum texto detectado na imagem",
+  "transcribing": "Transcrevendo..."
 }
