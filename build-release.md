@@ -44,8 +44,8 @@ flutter build appbundle --release --verbose
 ---
 
 ## Información de la versión actual
-- **Version Name**: 1.0.7
-- **Version Code**: 9
+- **Version Name**: 1.0.8
+- **Version Code**: 10
 - **Ubicación del AAB**: `build/app/outputs/bundle/release/app-release.aab`
 
 ---
