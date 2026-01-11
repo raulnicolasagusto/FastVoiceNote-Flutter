@@ -13,11 +13,15 @@ import 'package:intl/intl.dart';
 import '../../notes/models/note.dart';
 import '../../notes/models/checklist_utils.dart';
 import '../../transcription/services/audio_recorder_service.dart';
+import '../../transcription/services/meeting_recorder_service.dart';
 import '../../transcription/widgets/recording_dialog.dart';
 import '../../transcription/utils/voice_to_checklist_processor.dart';
+import '../../transcription/utils/audio_chunker.dart';
+import '../../transcription/utils/meeting_transcription_processor.dart';
 import '../../../core/utils/quick_voice_intent.dart';
 import 'package:vibration/vibration.dart';
 import '../../notifications/services/notification_service.dart';
+import '../../settings/providers/settings_provider.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -37,6 +41,7 @@ class _HomeScreenState extends State<HomeScreen>
   bool _foldersLoaded = false;
   StreamSubscription? _quickVoiceSubscription;
   bool _isQuickVoiceActive = false;
+  bool _isMeetingActive = false;
   
   // Search state
   bool _isSearching = false;
@@ -708,6 +713,94 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
+  Future<void> _onRecordMeeting() async {
+    if (_isMeetingActive) return;
+    _isMeetingActive = true;
+    _toggleFab();
+
+    final recorderService = MeetingRecorderService();
+    final settings = context.read<SettingsProvider>();
+    final language = settings.locale.languageCode;
+
+    try {
+      final l10n = AppLocalizations.of(context)!;
+      await recorderService.startMeetingRecording();
+
+      if (!mounted) return;
+
+      final transcriptionResult = await showDialog<MeetingTranscriptionResult>(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) => RecordingDialog(
+          mode: RecordingMode.meeting,
+          onCancel: () async {
+            await recorderService.cancel();
+            Navigator.of(dialogContext).pop();
+          },
+          onStop: () async {
+            final recordingResult = await recorderService.stopRecording();
+            if (recordingResult == null) {
+              Navigator.of(dialogContext).pop();
+              return;
+            }
+
+            final chunks = AudioChunker.chunkAudio(
+              samples: recordingResult.samples,
+              sampleRate: 16000,
+            );
+
+            final processor = MeetingTranscriptionProcessor(language: language);
+            final result = await processor.processChunks(
+              chunks: chunks,
+              l10n: l10n,
+              onProgress: (processed, total) {},
+            );
+
+            Navigator.of(dialogContext).pop(result);
+          },
+        ),
+      );
+
+      if (transcriptionResult != null && mounted) {
+        final now = DateTime.now();
+        final id = now.millisecondsSinceEpoch.toString();
+        final metadata = transcriptionResult.generateMetadata(
+          recordingDuration: Duration(
+            seconds: transcriptionResult.totalChunks * 20,
+          ),
+          startTime: now.subtract(Duration(
+            seconds: transcriptionResult.totalChunks * 20,
+          )),
+          endTime: now,
+          l10n: l10n,
+        );
+
+        final note = Note(
+          id: id,
+          title: '${l10n.meeting} ${DateFormat.yMd().add_Hm().format(now)}',
+          content: transcriptionResult.fullText + '\n\n' + metadata,
+          createdAt: now,
+          updatedAt: now,
+          color: 'FFFFFFFF',
+          hasVoice: true,
+          folderId: _getCurrentFolderId(),
+        );
+
+        context.read<NotesProvider>().addNote(note);
+        context.push('/note/$id');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
+    } finally {
+      recorderService.dispose();
+      _isMeetingActive = false;
+    }
+  }
+
   Future<void> _onNewNote() async {
     final l10n = AppLocalizations.of(context)!;
     final now = DateTime.now();
@@ -840,7 +933,7 @@ class _HomeScreenState extends State<HomeScreen>
           ScaleTransition(
             scale: _animation,
             child: Padding(
-              padding: const EdgeInsets.only(bottom: 140),
+              padding: const EdgeInsets.only(bottom: 185),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
@@ -879,11 +972,56 @@ class _HomeScreenState extends State<HomeScreen>
             ),
           ),
 
+          // Record Meeting button
+          ScaleTransition(
+            scale: _animation,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 125),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surface,
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Text(
+                      l10n.recordMeeting,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  FloatingActionButton(
+                    heroTag: 'recordMeeting',
+                    onPressed: _isMeetingActive ? null : _onRecordMeeting,
+                    backgroundColor: _isMeetingActive 
+                        ? Colors.grey[400] 
+                        : const Color(0xFF2196F3),
+                    child: const Icon(Icons.people, color: Colors.white),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
           // New Note button
           ScaleTransition(
             scale: _animation,
             child: Padding(
-              padding: const EdgeInsets.only(bottom: 70),
+              padding: const EdgeInsets.only(bottom: 65),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [

@@ -190,4 +190,30 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tapToAddContent => 'Tap to add content';
+
+  @override
+  String processingChunk(int currentChunk, int totalChunks) {
+    return 'Processing chunk $currentChunk of $totalChunks';
+  }
+
+  @override
+  String get meeting => 'Meeting';
+
+  @override
+  String get recordMeeting => 'Record Meeting';
+
+  @override
+  String get inaudible => '[Inaudible]';
+
+  @override
+  String get meetingMetadataTitle => 'Meeting Metadata';
+
+  @override
+  String get meetingDuration => 'Duration';
+
+  @override
+  String get meetingChunks => 'Chunks';
+
+  @override
+  String get meetingQuality => 'Quality';
 }

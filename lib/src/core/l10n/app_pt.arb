@@ -56,5 +56,23 @@
   "reminderNotificationBody": "Lembrete para a nota: {title}",
   "reminderSetForToday": "Lembrete ativado para hoje às",
   "reminderSetForDate": "Lembrete ativado para",
-  "tapToAddContent": "Toque para adicionar conteúdo"
+  "tapToAddContent": "Toque para adicionar conteúdo",
+  "processingChunk": "Processando fragmento {currentChunk} de {totalChunks}",
+  "@processingChunk": {
+    "placeholders": {
+      "currentChunk": {
+        "type": "int"
+      },
+      "totalChunks": {
+        "type": "int"
+      }
+    }
+  },
+  "meeting": "Reunião",
+  "recordMeeting": "Gravar Reunião",
+  "inaudible": "[Inaudível]",
+  "meetingMetadataTitle": "Metadados da Reunião",
+  "meetingDuration": "Duração",
+  "meetingChunks": "Fragmentos",
+  "meetingQuality": "Qualidade"
 }

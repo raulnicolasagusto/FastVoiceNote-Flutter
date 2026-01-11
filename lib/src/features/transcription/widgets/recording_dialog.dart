@@ -3,14 +3,23 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/l10n/generated/app_localizations.dart';
 
+enum RecordingMode {
+  quickNote,
+  meeting,
+}
+
 class RecordingDialog extends StatefulWidget {
+  final RecordingMode mode;
   final Future<void> Function() onStop;
   final Future<void> Function() onCancel;
+  final void Function(int current, int total)? onChunkProgress;
 
   const RecordingDialog({
     super.key,
+    this.mode = RecordingMode.quickNote,
     required this.onStop,
     required this.onCancel,
+    this.onChunkProgress,
   });
 
   @override
@@ -21,6 +30,10 @@ class _RecordingDialogState extends State<RecordingDialog>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   bool _isProcessing = false;
+  Timer? _timer;
+  Duration _elapsedTime = Duration.zero;
+  int _currentChunk = 0;
+  int _totalChunks = 0;
 
   @override
   void initState() {
@@ -29,12 +42,52 @@ class _RecordingDialogState extends State<RecordingDialog>
       vsync: this,
       duration: const Duration(milliseconds: 1000),
     )..repeat(reverse: true);
+
+    if (widget.mode == RecordingMode.meeting) {
+      _startTimer();
+    }
   }
 
   @override
   void dispose() {
     _controller.dispose();
+    _timer?.cancel();
     super.dispose();
+  }
+
+  void _startTimer() {
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted) {
+        setState(() {
+          _elapsedTime += const Duration(seconds: 1);
+        });
+      }
+    });
+  }
+
+  void updateChunkProgress(int current, int total) {
+    if (mounted) {
+      setState(() {
+        _currentChunk = current;
+        _totalChunks = total;
+      });
+      widget.onChunkProgress?.call(current, total);
+    }
+  }
+
+  String _formatDuration(Duration d) {
+    final hours = d.inHours;
+    final minutes = d.inMinutes.remainder(60);
+    final seconds = d.inSeconds.remainder(60);
+
+    if (hours > 0) {
+      return '${hours.toString().padLeft(2, '0')}:'
+          '${minutes.toString().padLeft(2, '0')}:'
+          '${seconds.toString().padLeft(2, '0')}';
+    } else {
+      return '${minutes.toString().padLeft(2, '0')}:'
+          '${seconds.toString().padLeft(2, '0')}';
+    }
   }
 
   Future<void> _handleStop() async {
@@ -107,6 +160,44 @@ class _RecordingDialogState extends State<RecordingDialog>
                       },
                     ),
             ),
+            // Timer for meeting mode
+            if (widget.mode == RecordingMode.meeting && !_isProcessing)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Text(
+                  _formatDuration(_elapsedTime),
+                  style: GoogleFonts.inter(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF2196F3),
+                  ),
+                ),
+              ),
+            // Chunk progress for meeting mode during processing
+            if (widget.mode == RecordingMode.meeting && _isProcessing)
+              Column(
+                children: [
+                  Text(
+                    l10n.processingChunk(_currentChunk, _totalChunks),
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      color: Colors.grey[700],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: _totalChunks > 0 ? _currentChunk / _totalChunks : 0,
+                      minHeight: 6,
+                      backgroundColor: Colors.grey[300],
+                      valueColor: const AlwaysStoppedAnimation<Color>(
+                        Color(0xFF2196F3),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             const SizedBox(height: 32),
             Row(
               children: [

@@ -17,8 +17,13 @@ import 'src/core/database/app_database.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize notification service - MUST await to ensure permissions are requested
-  await NotificationService().initialize();
+  // Initialize notification service with error handling
+  try {
+    await NotificationService().initialize();
+  } catch (e) {
+    debugPrint('Error initializing notifications: $e');
+    // Continue app initialization even if notifications fail
+  }
 
   // Load persisted settings to avoid flicker on startup
   Locale? initialLocale;

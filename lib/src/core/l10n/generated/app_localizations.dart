@@ -447,6 +447,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Tap to add content'**
   String get tapToAddContent;
+
+  /// No description provided for @processingChunk.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing chunk {currentChunk} of {totalChunks}'**
+  String processingChunk(int currentChunk, int totalChunks);
+
+  /// No description provided for @meeting.
+  ///
+  /// In en, this message translates to:
+  /// **'Meeting'**
+  String get meeting;
+
+  /// No description provided for @recordMeeting.
+  ///
+  /// In en, this message translates to:
+  /// **'Record Meeting'**
+  String get recordMeeting;
+
+  /// No description provided for @inaudible.
+  ///
+  /// In en, this message translates to:
+  /// **'[Inaudible]'**
+  String get inaudible;
+
+  /// No description provided for @meetingMetadataTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Meeting Metadata'**
+  String get meetingMetadataTitle;
+
+  /// No description provided for @meetingDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Duration'**
+  String get meetingDuration;
+
+  /// No description provided for @meetingChunks.
+  ///
+  /// In en, this message translates to:
+  /// **'Chunks'**
+  String get meetingChunks;
+
+  /// No description provided for @meetingQuality.
+  ///
+  /// In en, this message translates to:
+  /// **'Quality'**
+  String get meetingQuality;
 }
 
 class _AppLocalizationsDelegate

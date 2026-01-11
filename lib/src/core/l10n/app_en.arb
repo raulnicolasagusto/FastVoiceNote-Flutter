@@ -56,5 +56,23 @@
   "reminderNotificationBody": "Reminder for note: {title}",
   "reminderSetForToday": "Reminder set for today at",
   "reminderSetForDate": "Reminder set for",
-  "tapToAddContent": "Tap to add content"
+  "tapToAddContent": "Tap to add content",
+  "processingChunk": "Processing chunk {currentChunk} of {totalChunks}",
+  "@processingChunk": {
+    "placeholders": {
+      "currentChunk": {
+        "type": "int"
+      },
+      "totalChunks": {
+        "type": "int"
+      }
+    }
+  },
+  "meeting": "Meeting",
+  "recordMeeting": "Record Meeting",
+  "inaudible": "[Inaudible]",
+  "meetingMetadataTitle": "Meeting Metadata",
+  "meetingDuration": "Duration",
+  "meetingChunks": "Chunks",
+  "meetingQuality": "Quality"
 }
