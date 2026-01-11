@@ -77,5 +77,13 @@
   "meetingQuality": "Quality",
   "transcribe": "TRANSCRIBE",
   "noTextDetected": "No text detected in the image",
-  "transcribing": "Transcribing..."
+  "transcribing": "Transcribing...",
+  "drawing": "Drawing",
+  "drawingStudio": "Drawing Studio",
+  "brush": "Brush",
+  "eraser": "Eraser",
+  "undo": "Undo",
+  "redo": "Redo",
+  "colors": "Colors",
+  "strokeSize": "Stroke Size"
 }

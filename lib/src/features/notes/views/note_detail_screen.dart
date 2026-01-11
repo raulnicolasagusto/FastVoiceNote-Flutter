@@ -25,6 +25,7 @@ import '../../../core/database/app_database.dart';
 import '../../settings/services/tooltip_service.dart';
 import '../../settings/providers/settings_provider.dart';
 import '../services/ocr_service.dart';
+import 'drawing_canvas_screen.dart';
 
 class NoteDetailScreen extends StatefulWidget {
   final String noteId;
@@ -529,6 +530,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
       builder: (context) => PhotoOptionsDialog(
         onTakePhoto: _takePicture,
         onUploadFile: _uploadFile,
+        onDrawing: _openDrawingCanvas,
       ),
     );
   }
@@ -556,6 +558,34 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
             duration: const Duration(seconds: 2),
           ),
         );
+      }
+    }
+  }
+
+  Future<void> _openDrawingCanvas() async {
+    final String? drawingPath = await Navigator.of(context).push<String>(
+      MaterialPageRoute(builder: (context) => const DrawingCanvasScreen()),
+    );
+
+    if (drawingPath != null) {
+      if (mounted) {
+        await context.read<NotesProvider>().addAttachment(
+          widget.noteId,
+          drawingPath,
+          'image',
+        );
+
+        await _loadAttachments();
+
+        if (mounted) {
+          final l10n = AppLocalizations.of(context)!;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(l10n.photoAddedSuccess),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
       }
     }
   }

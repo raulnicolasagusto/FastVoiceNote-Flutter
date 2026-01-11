@@ -77,5 +77,13 @@
   "meetingQuality": "Calidad",
   "transcribe": "TRANSCRIBIR",
   "noTextDetected": "No se detectó texto en la imagen",
-  "transcribing": "Transcribiendo..."
+  "transcribing": "Transcribiendo...",
+  "drawing": "Dibujo",
+  "drawingStudio": "Estudio de Dibujo",
+  "brush": "Pincel",
+  "eraser": "Borrador",
+  "undo": "Deshacer",
+  "redo": "Rehacer",
+  "colors": "Colores",
+  "strokeSize": "Tamaño de trazo"
 }

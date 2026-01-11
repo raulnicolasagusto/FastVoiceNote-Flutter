@@ -51,4 +51,4 @@ app.*.map.json
 android/key.properties
 
 
-privacyTerms.md
+#privacyTerms.md

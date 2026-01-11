@@ -5,11 +5,13 @@ import '../../../core/l10n/generated/app_localizations.dart';
 class PhotoOptionsDialog extends StatelessWidget {
   final VoidCallback? onTakePhoto;
   final VoidCallback? onUploadFile;
+  final VoidCallback? onDrawing;
 
   const PhotoOptionsDialog({
     super.key,
     this.onTakePhoto,
     this.onUploadFile,
+    this.onDrawing,
   });
 
   @override
@@ -20,9 +22,7 @@ class PhotoOptionsDialog extends StatelessWidget {
 
     return Dialog(
       backgroundColor: isDark ? colors.surface : Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(
@@ -59,6 +59,16 @@ class PhotoOptionsDialog extends StatelessWidget {
                 onUploadFile?.call();
               },
             ),
+            const SizedBox(height: 16),
+            _OptionItem(
+              icon: Icons.palette_outlined,
+              label: l10n.drawing,
+              isDark: isDark,
+              onTap: () {
+                Navigator.of(context).pop();
+                onDrawing?.call();
+              },
+            ),
           ],
         ),
       ),
@@ -83,7 +93,7 @@ class _OptionItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final textColor = isDark ? colors.onSurface : Colors.black87;
-    
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
@@ -91,11 +101,7 @@ class _OptionItem extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0),
         child: Row(
           children: [
-            Icon(
-              icon,
-              color: textColor,
-              size: 24,
-            ),
+            Icon(icon, color: textColor, size: 24),
             const SizedBox(width: 16),
             Text(
               label,
