@@ -30,8 +30,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen>
-    with TickerProviderStateMixin {
+class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   late AnimationController _animationController;
   late Animation<double> _animation;
@@ -42,7 +41,7 @@ class _HomeScreenState extends State<HomeScreen>
   StreamSubscription? _quickVoiceSubscription;
   bool _isQuickVoiceActive = false;
   bool _isMeetingActive = false;
-  
+
   // Search state
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
@@ -62,7 +61,7 @@ class _HomeScreenState extends State<HomeScreen>
       reverseCurve: Curves.easeInBack,
     );
     _loadFolders();
-    
+
     // Listen for quick voice note intent from deep link
     _quickVoiceSubscription = QuickVoiceNoteIntent.stream.listen((_) {
       if (mounted) {
@@ -134,7 +133,7 @@ class _HomeScreenState extends State<HomeScreen>
         _selectedNotes.add(noteId);
       }
     });
-    
+
     if (wasSelectionEmpty && _selectedNotes.isNotEmpty) {
       Vibration.vibrate(duration: 50, amplitude: 100);
     }
@@ -175,15 +174,17 @@ class _HomeScreenState extends State<HomeScreen>
       filtered = filtered.where((note) {
         // Search in title
         if (note.title.toLowerCase().contains(_searchQuery)) return true;
-        
+
         // Search in content (including checklist items)
         final content = ChecklistUtils.getPreview(note.content).toLowerCase();
         if (content.contains(_searchQuery)) return true;
-        
+
         // Search in date
-        final dateStr = DateFormat('dd/MM/yyyy').format(note.updatedAt).toLowerCase();
+        final dateStr = DateFormat(
+          'dd/MM/yyyy',
+        ).format(note.updatedAt).toLowerCase();
         if (dateStr.contains(_searchQuery)) return true;
-        
+
         return false;
       }).toList();
     }
@@ -205,12 +206,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   Widget _buildNoteGrid(List<Note> notesToShow, BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(
-        top: 0.1,
-        left: 8,
-        right: 8,
-        bottom: 8,
-      ),
+      padding: const EdgeInsets.only(top: 0.1, left: 8, right: 8, bottom: 8),
       child: notesToShow.isEmpty
           ? Center(
               child: GestureDetector(
@@ -229,9 +225,9 @@ class _HomeScreenState extends State<HomeScreen>
                     const SizedBox(height: 16),
                     Text(
                       AppLocalizations.of(context)!.tapToCreateFirstNote,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.grey[600],
-                      ),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
                     ),
                   ],
                 ),
@@ -282,7 +278,7 @@ class _HomeScreenState extends State<HomeScreen>
       }
       final folderName = AppFolders.getFolderName(folderId);
       final isCustomFolder = !AppFolders.isDefaultFolder(folderId);
-      
+
       // Si es carpeta personalizada, permitir long press para editar/eliminar
       if (isCustomFolder) {
         return Tab(
@@ -292,7 +288,7 @@ class _HomeScreenState extends State<HomeScreen>
           ),
         );
       }
-      
+
       return Tab(text: folderName);
     }).toList();
   }
@@ -321,7 +317,9 @@ class _HomeScreenState extends State<HomeScreen>
         context: context,
         builder: (context) {
           return Dialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
             child: Padding(
               padding: const EdgeInsets.all(24.0),
               child: Column(
@@ -331,8 +329,8 @@ class _HomeScreenState extends State<HomeScreen>
                   Text(
                     l10n.noteLockedTitle,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   Text(
@@ -363,7 +361,9 @@ class _HomeScreenState extends State<HomeScreen>
       context: context,
       builder: (context) {
         return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           child: Padding(
             padding: const EdgeInsets.all(24.0),
             child: Column(
@@ -373,8 +373,8 @@ class _HomeScreenState extends State<HomeScreen>
                 Text(
                   isSingle ? l10n.deleteSingleTitle : l10n.deleteMultipleTitle,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 Text(
@@ -444,17 +444,17 @@ class _HomeScreenState extends State<HomeScreen>
             _selectedNotes.toList(),
             folderId,
           );
-          
+
           // Limpiar la selección
           _clearSelection();
-          
+
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                  folderId == null 
-                    ? 'Moved to All Notes'
-                    : 'Moved to ${AppFolders.getFolderName(folderId)}',
+                  folderId == null
+                      ? 'Moved to All Notes'
+                      : 'Moved to ${AppFolders.getFolderName(folderId)}',
                 ),
               ),
             );
@@ -470,22 +470,22 @@ class _HomeScreenState extends State<HomeScreen>
       builder: (context) => CreateFolderModal(
         onFolderCreated: (folderName) async {
           Navigator.of(context).pop();
-          
+
           // Generate a unique folder ID
           final folderId = 'folder_${DateTime.now().millisecondsSinceEpoch}';
-          
+
           // Add folder to AppFolders
           await AppFolders.addCustomFolder(folderId, folderName);
-          
+
           // Recreate TabController with new count
           final oldController = _tabController;
           final newLength = 1 + AppFolders.getAllFolders().length;
           _tabController = TabController(length: newLength, vsync: this);
           oldController.dispose();
-          
+
           // Rebuild UI
           setState(() {});
-          
+
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Folder "$folderName" created')),
           );
@@ -495,8 +495,10 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   void _showEditFolderDialog(String folderId, String currentName) {
-    final TextEditingController controller = TextEditingController(text: currentName);
-    
+    final TextEditingController controller = TextEditingController(
+      text: currentName,
+    );
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -566,27 +568,27 @@ class _HomeScreenState extends State<HomeScreen>
                   .where((note) => note.folderId == folderId)
                   .map((note) => note.id)
                   .toList();
-              
+
               if (notesToMove.isNotEmpty) {
                 await notesProvider.moveNotes(notesToMove, null);
               }
-              
+
               // Delete folder
               await AppFolders.deleteFolder(folderId);
-              
+
               // Recreate TabController with new count
               final oldController = _tabController;
               final newLength = 1 + AppFolders.getAllFolders().length;
               _tabController = TabController(length: newLength, vsync: this);
               oldController.dispose();
-              
+
               // Rebuild UI
               setState(() {});
-              
+
               Navigator.of(context).pop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Deleted "$folderName"')),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text('Deleted "$folderName"')));
             },
             style: TextButton.styleFrom(
               foregroundColor: Theme.of(context).colorScheme.error,
@@ -611,7 +613,7 @@ class _HomeScreenState extends State<HomeScreen>
       final locale = Localizations.localeOf(context);
       final languageCode = locale.languageCode; // 'en', 'es', 'pt', etc.
       recorderService.setLanguage(languageCode);
-      
+
       await recorderService.init();
 
       // 3. Start recording immediately logic
@@ -651,7 +653,9 @@ class _HomeScreenState extends State<HomeScreen>
         final id = now.millisecondsSinceEpoch.toString();
 
         // Generate note content based on whether it's a checklist or regular text
-        final noteContent = VoiceToChecklistProcessor.generateNoteContent(processed);
+        final noteContent = VoiceToChecklistProcessor.generateNoteContent(
+          processed,
+        );
 
         // Create appropriate title based on content type
         final noteTitle = processed.isChecklist
@@ -676,7 +680,8 @@ class _HomeScreenState extends State<HomeScreen>
         if (newNote.reminderAt != null && mounted) {
           final l10n = AppLocalizations.of(context)!;
           final now = DateTime.now();
-          final isToday = newNote.reminderAt!.day == now.day &&
+          final isToday =
+              newNote.reminderAt!.day == now.day &&
               newNote.reminderAt!.month == now.month &&
               newNote.reminderAt!.year == now.year;
 
@@ -694,9 +699,9 @@ class _HomeScreenState extends State<HomeScreen>
               ? '${l10n.reminderSetForToday} $formattedTime'
               : '${l10n.reminderSetForDate} ${DateFormat.yMd(locale.languageCode).format(newNote.reminderAt!)} $formattedTime';
 
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(message)),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(message)));
         }
 
         context.push('/note/$id');
@@ -768,9 +773,9 @@ class _HomeScreenState extends State<HomeScreen>
           recordingDuration: Duration(
             seconds: transcriptionResult.totalChunks * 20,
           ),
-          startTime: now.subtract(Duration(
-            seconds: transcriptionResult.totalChunks * 20,
-          )),
+          startTime: now.subtract(
+            Duration(seconds: transcriptionResult.totalChunks * 20),
+          ),
           endTime: now,
           l10n: l10n,
         );
@@ -830,9 +835,7 @@ class _HomeScreenState extends State<HomeScreen>
 
     // Show loading until folders are loaded
     if (!_foldersLoaded) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     return Scaffold(
@@ -849,27 +852,27 @@ class _HomeScreenState extends State<HomeScreen>
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     )
                   : _isSearching
-                      ? TextField(
-                          controller: _searchController,
-                          focusNode: _searchFocusNode,
-                          onChanged: _onSearchChanged,
-                          decoration: InputDecoration(
-                            hintText: 'Search notes...',
-                            border: InputBorder.none,
-                            hintStyle: TextStyle(
-                              color: Colors.grey[400],
-                              fontWeight: FontWeight.normal,
-                            ),
-                          ),
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 20,
-                          ),
-                        )
-                      : Text(
-                          l10n.notesTitle,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                  ? TextField(
+                      controller: _searchController,
+                      focusNode: _searchFocusNode,
+                      onChanged: _onSearchChanged,
+                      decoration: InputDecoration(
+                        hintText: 'Search notes...',
+                        border: InputBorder.none,
+                        hintStyle: TextStyle(
+                          color: Colors.grey[400],
+                          fontWeight: FontWeight.normal,
                         ),
+                      ),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20,
+                      ),
+                    )
+                  : Text(
+                      l10n.notesTitle,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
               centerTitle: false,
               floating: true,
               snap: true,
@@ -914,7 +917,9 @@ class _HomeScreenState extends State<HomeScreen>
                 tabAlignment: TabAlignment.start,
                 labelPadding: const EdgeInsets.symmetric(horizontal: 12),
                 labelStyle: const TextStyle(fontWeight: FontWeight.w600),
-                unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500),
+                unselectedLabelStyle: const TextStyle(
+                  fontWeight: FontWeight.w500,
+                ),
                 indicatorSize: TabBarIndicatorSize.label,
                 tabs: _buildTabs(l10n),
               ),
@@ -933,7 +938,7 @@ class _HomeScreenState extends State<HomeScreen>
           ScaleTransition(
             scale: _animation,
             child: Padding(
-              padding: const EdgeInsets.only(bottom: 185),
+              padding: const EdgeInsets.only(bottom: 192),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
@@ -976,7 +981,7 @@ class _HomeScreenState extends State<HomeScreen>
           ScaleTransition(
             scale: _animation,
             child: Padding(
-              padding: const EdgeInsets.only(bottom: 125),
+              padding: const EdgeInsets.only(bottom: 128),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
@@ -1007,8 +1012,8 @@ class _HomeScreenState extends State<HomeScreen>
                   FloatingActionButton(
                     heroTag: 'recordMeeting',
                     onPressed: _isMeetingActive ? null : _onRecordMeeting,
-                    backgroundColor: _isMeetingActive 
-                        ? Colors.grey[400] 
+                    backgroundColor: _isMeetingActive
+                        ? Colors.grey[400]
                         : const Color(0xFF2196F3),
                     child: const Icon(Icons.people, color: Colors.white),
                   ),
@@ -1021,7 +1026,7 @@ class _HomeScreenState extends State<HomeScreen>
           ScaleTransition(
             scale: _animation,
             child: Padding(
-              padding: const EdgeInsets.only(bottom: 65),
+              padding: const EdgeInsets.only(bottom: 64),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
