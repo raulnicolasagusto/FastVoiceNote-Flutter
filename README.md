@@ -50,6 +50,15 @@ A powerful, AI-powered voice note-taking application built with **Flutter** that
 - **Share notes** as text or images
 - **Home screen widgets** for quick access
 
+### 🎨 **Drawing Canvas (Sketches)**
+- **Fluid drawing engine** - High-performance sketching with CustomPainter
+- **Smart Eraser Tool** - Gradually remove content with adjustable thickness
+- **Pro Color Palette** - Pick any color for your annotations and sketches
+- **Variable Brush Thickness** - From fine details to broad strokes
+- **Undo/Redo support** - Effortless correction for your drawings
+- **Local Persistence** - Drawings are saved as PNG and stored as note attachments
+
+
 ### ⏰ **Smart Reminders & Notifications**
 - **Scheduled notifications** for time-sensitive notes
 - **On-device alarm scheduling** with exact timing
@@ -108,7 +117,7 @@ lib/
  │   │   ├── notes/             # Note CRUD operations
  │   │   │   ├── models/        # Note, Checklist models
  │   │   │   ├── providers/     # State management
- │   │   │   ├── views/         # Detail screen
+ │   │   │   ├── views/         # Detail screen, Drawing canvas screen
  │   │   │   ├── widgets/       # Checklist, Color picker, etc.
  │   │   │   └── services/      # Image, Share, Widget services
  │   │   ├── notifications/     # Reminder notifications
@@ -324,150 +333,6 @@ Flutter UI → MeetingRecorderService → AudioChunker → MeetingTranscriptionP
 - Language-specific transcription (en/es/pt)
 - Smart chunking with overlap for long recordings
 - Resilient error handling (never aborts on single chunk failures)
-
-### Database Schema
-
-```sql
-CREATE TABLE notes (
-  id TEXT PRIMARY KEY,
-  title TEXT NOT NULL,
-  content TEXT,
-  created_at INTEGER NOT NULL,
-  updated_at INTEGER NOT NULL,
-  color TEXT NOT NULL,
-  has_image INTEGER DEFAULT 0,
-  has_voice INTEGER DEFAULT 0,
-  is_pinned INTEGER DEFAULT 0,
-  is_locked INTEGER DEFAULT 0,
-  folder_id TEXT,
-  reminder_at INTEGER
-);
-
-CREATE TABLE attachments (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  note_id TEXT NOT NULL,
-  file_path TEXT NOT NULL,
-  file_type TEXT NOT NULL,
-  file_name TEXT,
-  created_at INTEGER NOT NULL,
-  FOREIGN KEY (note_id) REFERENCES notes(id)
-);
-```
-
-## 📱 Screenshots
-
-*(Add screenshots here showcasing different features)*
-
-## 🧪 Testing
-
-The project includes comprehensive test files for voice detection:
-
-```bash
-# Run voice detection tests
-dart test_voice_detection.dart
-
-# Run checklist creation tests
-dart test_demo_in_note_voice.dart
-
-# Run error handling tests
-dart test_error_handling.dart
-```
-
-## 🛠️ Development Guidelines
-
-### Code Style
-- Follow Dart/Flutter official style guide
-- Use `const` constructors where possible
-- Prefer `StatelessWidget` over `StatefulWidget` when state is not needed
-- Always use localized strings (never hardcode text)
-
-### Adding New Features
-1. Create feature-specific folder under `lib/src/features/`
-2. Follow clean architecture: `models/`, `views/`, `widgets/`, `services/`
-3. Add translations to all 3 `.arb` files simultaneously
-4. Update documentation in `agents/` folder
-5. Write tests for critical functionality
-
-### Localization Workflow
-1. Add key to `app_en.arb`, `app_es.arb`, `app_pt.arb`
-2. Run `flutter gen-l10n`
-3. Use `AppLocalizations.of(context)!.keyName` in code
-4. Never hardcode strings visible to users
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- **[Whisper.cpp](https://github.com/ggerganov/whisper.cpp)** by Georgi Gerganov - Efficient C++ implementation of OpenAI's Whisper
-- **[OpenAI Whisper](https://github.com/openai/whisper)** - Original speech recognition model
-- **Flutter Team** - Amazing cross-platform framework
-- **Drift Team** - Reactive persistence library for Flutter
-
-## 📧 Contact
-
-- **GitHub**: [@yourusername](https://github.com/yourusername)
-- **Email**: your.email@example.com
-- **LinkedIn**: [Your Name](https://linkedin.com/in/yourprofile)
-
-## 🎖️ Skills Demonstrated
-
-This project showcases expertise in:
-
-### Flutter/Dart Development
-- ✅ Clean Architecture & SOLID principles
-- ✅ State Management (Provider pattern)
-- ✅ Navigation (GoRouter)
-- ✅ Custom widgets & animations
-- ✅ Material Design 3 implementation
-
-### Native Integration
-- ✅ FFI (Foreign Function Interface)
-- ✅ C++ native module development
-- ✅ CMake build configuration
-- ✅ Platform-specific code (Android/iOS)
-
-### AI & Machine Learning
-- ✅ On-device AI model integration
-- ✅ Speech-to-text processing
-- ✅ Natural language processing
-- ✅ Multi-language AI model optimization
-
-### Database & Persistence
-- ✅ SQLite with Drift ORM
-- ✅ Complex queries & relationships
-- ✅ Data migration strategies
-- ✅ Efficient data caching
-
-### Internationalization
-- ✅ Multi-language support (3 languages)
-- ✅ ARB file management
-- ✅ Locale-aware formatting
-- ✅ RTL support ready
-
-### UX/UI Design
-- ✅ Material Design 3
-- ✅ Responsive layouts
-- ✅ Dark/Light theme support
-- ✅ Accessibility considerations
-- ✅ Micro-interactions
-
-### Software Engineering Best Practices
-- ✅ Modular architecture
-- ✅ Code reusability
-- ✅ Documentation
-- ✅ Testing strategies
 - ✅ Version control (Git)
 
 ---
