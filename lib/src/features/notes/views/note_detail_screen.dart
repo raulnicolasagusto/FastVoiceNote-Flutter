@@ -26,6 +26,8 @@ import '../../settings/services/tooltip_service.dart';
 import '../../settings/providers/settings_provider.dart';
 import '../services/ocr_service.dart';
 import 'drawing_canvas_screen.dart';
+import 'image_preview_screen.dart';
+import 'package:open_filex/open_filex.dart';
 
 class NoteDetailScreen extends StatefulWidget {
   final String noteId;
@@ -201,7 +203,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
             await NotificationService().scheduleReminder(
               noteId: widget.noteId,
               title: note?.title ?? 'Untitled',
-              scheduledTime: dateTime!,
+              scheduledTime: dateTime,
               locale: locale,
             );
             if (mounted) {
@@ -1146,6 +1148,32 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
     );
   }
 
+  Future<void> _openFile(String filePath) async {
+    final l10n = AppLocalizations.of(context)!;
+
+    final bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.openFileTitle),
+        content: Text(l10n.openFileMessage),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(l10n.no),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(l10n.yes),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await OpenFilex.open(filePath);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final note = context.watch<NotesProvider>().getNoteById(widget.noteId);
@@ -1555,6 +1583,17 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                                 },
                                 onTranscribe: () =>
                                     _transcribeImage(attachment.filePath),
+                                onTap: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (context) => ImagePreviewScreen(
+                                        imagePath: attachment.filePath,
+                                        heroTag: 'attachment_${attachment.id}',
+                                      ),
+                                    ),
+                                  );
+                                },
+                                heroTag: 'attachment_${attachment.id}',
                               );
                             } else {
                               return _FileThumbnail(
@@ -1570,6 +1609,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                                   );
                                   await _loadAttachments();
                                 },
+                                onTap: () => _openFile(attachment.filePath),
                               );
                             }
                           }).toList(),
@@ -1600,12 +1640,16 @@ class _ImageThumbnail extends StatelessWidget {
   final Color textColor;
   final VoidCallback onDelete;
   final VoidCallback onTranscribe;
+  final VoidCallback onTap;
+  final String heroTag;
 
   const _ImageThumbnail({
     required this.imagePath,
     required this.textColor,
     required this.onDelete,
     required this.onTranscribe,
+    required this.onTap,
+    required this.heroTag,
   });
 
   @override
@@ -1614,13 +1658,19 @@ class _ImageThumbnail extends StatelessWidget {
       children: [
         Stack(
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Image.file(
-                File(imagePath),
-                width: 150,
-                height: 150,
-                fit: BoxFit.cover,
+            GestureDetector(
+              onTap: onTap,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Hero(
+                  tag: heroTag,
+                  child: Image.file(
+                    File(imagePath),
+                    width: 150,
+                    height: 150,
+                    fit: BoxFit.cover,
+                  ),
+                ),
               ),
             ),
             Positioned(
@@ -1674,12 +1724,14 @@ class _FileThumbnail extends StatelessWidget {
   final String fileName;
   final Color textColor;
   final VoidCallback onDelete;
+  final VoidCallback onTap;
 
   const _FileThumbnail({
     required this.filePath,
     required this.fileName,
     required this.textColor,
     required this.onDelete,
+    required this.onTap,
   });
 
   IconData _getFileIcon(String fileName) {
@@ -1729,38 +1781,41 @@ class _FileThumbnail extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        Container(
-          width: 150,
-          height: 150,
-          decoration: BoxDecoration(
-            color: Colors.grey.shade200,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.grey.shade300),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                _getFileIcon(fileName),
-                size: 48,
-                color: _getFileColor(fileName),
-              ),
-              const SizedBox(height: 8),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: Text(
-                  fileName,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade800,
-                    fontWeight: FontWeight.w500,
+        GestureDetector(
+          onTap: onTap,
+          child: Container(
+            width: 150,
+            height: 150,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade200,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.grey.shade300),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  _getFileIcon(fileName),
+                  size: 48,
+                  color: _getFileColor(fileName),
+                ),
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Text(
+                    fileName,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade800,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
         Positioned(

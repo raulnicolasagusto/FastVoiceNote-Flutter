@@ -85,5 +85,9 @@
   "undo": "Desfazer",
   "redo": "Refazer",
   "colors": "Cores",
-  "strokeSize": "Tamanho do traço"
+  "strokeSize": "Tamanho do traço",
+  "openFileTitle": "Abrir arquivo?",
+  "openFileMessage": "Deseja abrir este arquivo com um aplicativo externo?",
+  "yes": "Sim",
+  "no": "Não"
 }

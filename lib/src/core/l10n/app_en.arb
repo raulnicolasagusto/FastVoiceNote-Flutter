@@ -85,5 +85,9 @@
   "undo": "Undo",
   "redo": "Redo",
   "colors": "Colors",
-  "strokeSize": "Stroke Size"
+  "strokeSize": "Stroke Size",
+  "openFileTitle": "Open File?",
+  "openFileMessage": "Do you want to open this file with an external application?",
+  "yes": "Yes",
+  "no": "No"
 }
