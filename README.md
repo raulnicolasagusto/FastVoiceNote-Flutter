@@ -87,6 +87,7 @@ A powerful, AI-powered voice note-taking application built with **Flutter** that
 - **Smooth animations** and transitions
 - **Auto-save functionality** - no "Save" button needed
 - **Inline editing** with tap-to-edit paradigm
+- **Monetization Support (AdMob)**: Integrated banners and interstitial ads with localized trigger logic
 
 ## 🏗️ Architecture
 
@@ -316,6 +317,22 @@ Extracts items: ["apples", "milk", "bread", "eggs"]
         ↓
 Creates interactive checklist note
 ```
+
+### 💰 AdMob Monetization
+
+The app is integrated with Google AdMob to provide a sustainable monetization model without compromising the user experience.
+
+**Ad Units:**
+- **FastVoiceNote Home Banner** (Banner): Positioned at the bottom of the home screen note grid.
+- **FastViceNote Note Banner** (Banner): Positioned at the bottom of the note detail view.
+- **Muro** (Interstitial): High-visibility full-screen ad.
+
+**Intelligent Trigger Logic:**
+- **Periodic Interstitials**: To ensure a premium experience, the "Muro" interstitial ad is only shown every **4th time** the app is opened (e.g., 4th, 8th, 12th open).
+- **Graceful Loading**: The implementation includes a smart loading mechanism in `AdService` that waits up to 10 seconds for the ad to download before attempting to show it, improving reliability on slower connections.
+- **Environment Aware**: Automatically uses Google's Test IDs in `Debug` mode and switches to real production IDs in `Release` mode.
+
+**Key File:** [lib/src/core/services/ad_service.dart](lib/src/core/services/ad_service.dart)
 
 ### Whisper Integration
 

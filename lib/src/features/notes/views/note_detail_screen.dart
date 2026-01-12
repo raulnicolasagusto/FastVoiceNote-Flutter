@@ -2,7 +2,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import '../../../core/l10n/generated/app_localizations.dart';
+import '../../../core/services/ad_service.dart';
 import '../../transcription/services/audio_recorder_service.dart';
 import '../../transcription/widgets/recording_dialog.dart';
 import '../../transcription/utils/voice_add_to_note_processor.dart';
@@ -39,6 +41,8 @@ class NoteDetailScreen extends StatefulWidget {
 }
 
 class _NoteDetailScreenState extends State<NoteDetailScreen> {
+  BannerAd? _bannerAd;
+  bool _isBannerAdLoaded = false;
   late TextEditingController _titleController;
   late TextEditingController _contentController;
   bool _isEditingTitle = false;
@@ -68,6 +72,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
   @override
   void initState() {
     super.initState();
+    _loadBannerAd();
     final note = context.read<NotesProvider>().getNoteById(widget.noteId);
     _titleController = TextEditingController(text: note?.title ?? '');
     // Si hay checklist, obtener solo el texto original
@@ -114,12 +119,24 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
   void dispose() {
     _isShowingTooltip = false; // Stop showing tooltips
     context.read<SettingsProvider>().removeListener(_onSettingsChanged);
+    _bannerAd?.dispose();
     _titleController.dispose();
     _contentController.dispose();
     _searchController.dispose();
     _searchFocusNode.dispose();
     _ocrService.dispose();
     super.dispose();
+  }
+
+  void _loadBannerAd() {
+    _bannerAd = AdService().createBannerAd('note')
+      ..load().then((_) {
+        if (mounted) {
+          setState(() {
+            _isBannerAdLoaded = true;
+          });
+        }
+      });
   }
 
   Future<void> _saveTitle() async {
@@ -1460,6 +1477,9 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                                   hintText: 'Title',
                                   hintStyle: TextStyle(color: hintColor),
                                 ),
+                                scrollPadding: const EdgeInsets.only(
+                                  bottom: 92,
+                                ),
                                 onSubmitted: (_) => _saveTitle(),
                                 onTapOutside: (_) => _saveTitle(),
                               )
@@ -1517,6 +1537,9 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                                           hintStyle: TextStyle(
                                             color: hintColor,
                                           ),
+                                        ),
+                                        scrollPadding: const EdgeInsets.only(
+                                          bottom: 92,
                                         ),
                                         onTapOutside: (_) => _saveContent(),
                                         onSubmitted: (_) => _saveContent(),
@@ -1616,7 +1639,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                         ),
                       ],
 
-                      const SizedBox(height: 100),
+                      const SizedBox(height: 300),
                     ],
                   ),
                 ),
@@ -1624,6 +1647,14 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
             ],
           ),
         ),
+        bottomNavigationBar: _isBannerAdLoaded && _bannerAd != null
+            ? Container(
+                alignment: Alignment.center,
+                width: _bannerAd!.size.width.toDouble(),
+                height: _bannerAd!.size.height.toDouble(),
+                child: AdWidget(ad: _bannerAd!),
+              )
+            : null,
       ),
     );
   }

@@ -43,15 +43,16 @@ class _ChecklistWidgetState extends State<ChecklistWidget> {
   @override
   void didUpdateWidget(ChecklistWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    
+
     // Solo actualizar si cambió el modo de edición
     if (oldWidget.isEditing != widget.isEditing) {
       _isEditing = widget.isEditing;
     }
-    
+
     // Solo reinicializar si los items cambiaron desde FUERA (no por edición interna)
     // Comparamos por referencia para evitar actualizaciones cuando editamos internamente
-    if (!identical(oldWidget.items, widget.items) && !identical(widget.items, _items)) {
+    if (!identical(oldWidget.items, widget.items) &&
+        !identical(widget.items, _items)) {
       _syncWithExternalChanges();
     }
   }
@@ -60,7 +61,7 @@ class _ChecklistWidgetState extends State<ChecklistWidget> {
     final newItems = List<ChecklistItem>.from(widget.items);
     final oldIds = _items.map((i) => i.id).toSet();
     final newIds = newItems.map((i) => i.id).toSet();
-    
+
     // Eliminar controllers de items que ya no existen
     for (var id in oldIds.difference(newIds)) {
       _controllers[id]?.dispose();
@@ -68,7 +69,7 @@ class _ChecklistWidgetState extends State<ChecklistWidget> {
       _focusNodes[id]?.dispose();
       _focusNodes.remove(id);
     }
-    
+
     // Crear controllers para items nuevos O actualizar texto si cambió externamente
     for (var item in newItems) {
       if (!_controllers.containsKey(item.id)) {
@@ -79,13 +80,13 @@ class _ChecklistWidgetState extends State<ChecklistWidget> {
         // Item existente - solo actualizar si el texto cambió y no está enfocado
         final controller = _controllers[item.id]!;
         final focusNode = _focusNodes[item.id]!;
-        
+
         // Solo actualizar si no tiene foco (no está siendo editado)
         if (!focusNode.hasFocus && controller.text != item.text) {
           // Guardar posición del cursor por si acaso
           final selection = controller.selection;
           controller.text = item.text;
-          
+
           // Restaurar selección si es válida
           if (selection.isValid && selection.end <= item.text.length) {
             controller.selection = selection;
@@ -93,7 +94,7 @@ class _ChecklistWidgetState extends State<ChecklistWidget> {
         }
       }
     }
-    
+
     _items = newItems;
   }
 
@@ -125,7 +126,9 @@ class _ChecklistWidgetState extends State<ChecklistWidget> {
     setState(() {
       final index = _items.indexWhere((item) => item.id == itemId);
       if (index != -1) {
-        _items[index] = _items[index].copyWith(isChecked: !_items[index].isChecked);
+        _items[index] = _items[index].copyWith(
+          isChecked: !_items[index].isChecked,
+        );
         _updateItems();
       }
     });
@@ -140,7 +143,7 @@ class _ChecklistWidgetState extends State<ChecklistWidget> {
       _focusNodes[newId] = FocusNode();
       _isEditing = true;
       _updateItems();
-      
+
       // Focus on the new item after build
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _focusNodes[newId]?.requestFocus();
@@ -163,7 +166,7 @@ class _ChecklistWidgetState extends State<ChecklistWidget> {
     final index = _items.indexWhere((item) => item.id == itemId);
     if (index != -1) {
       _items[index] = _items[index].copyWith(text: text);
-      
+
       // Usar debounce para actualizar el provider (500ms)
       _debounceTimer?.cancel();
       _debounceTimer = Timer(const Duration(milliseconds: 500), () {
@@ -183,7 +186,8 @@ class _ChecklistWidgetState extends State<ChecklistWidget> {
     final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
     // Get text color from the Theme (which is set based on note background)
-    final textColor = Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black87;
+    final textColor =
+        Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black87;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -218,7 +222,10 @@ class _ChecklistWidgetState extends State<ChecklistWidget> {
               onTap: _addItem,
               borderRadius: BorderRadius.circular(8),
               child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 12.0,
+                  horizontal: 8.0,
+                ),
                 decoration: BoxDecoration(
                   border: Border.all(
                     color: colors.primary.withValues(alpha: 0.6),
@@ -229,11 +236,7 @@ class _ChecklistWidgetState extends State<ChecklistWidget> {
                 ),
                 child: Row(
                   children: [
-                    Icon(
-                      Icons.add,
-                      color: colors.primary,
-                      size: 20,
-                    ),
+                    Icon(Icons.add, color: colors.primary, size: 20),
                     const SizedBox(width: 8),
                     Text(
                       l10n.addItem,
@@ -288,7 +291,11 @@ class _ChecklistItemWidget extends StatefulWidget {
 class _ChecklistItemWidgetState extends State<_ChecklistItemWidget> {
   bool _isEditingText = false;
 
-  TextSpan _buildHighlightedText(String text, TextStyle style, Color highlightColor) {
+  TextSpan _buildHighlightedText(
+    String text,
+    TextStyle style,
+    Color highlightColor,
+  ) {
     final searchQuery = widget.searchQuery.toLowerCase();
     if (searchQuery.isEmpty) {
       return TextSpan(text: text, style: style);
@@ -307,17 +314,21 @@ class _ChecklistItemWidgetState extends State<_ChecklistItemWidget> {
 
       // Add text before match
       if (index > currentIndex) {
-        spans.add(TextSpan(text: text.substring(currentIndex, index), style: style));
+        spans.add(
+          TextSpan(text: text.substring(currentIndex, index), style: style),
+        );
       }
 
       // Add highlighted match
-      spans.add(TextSpan(
-        text: text.substring(index, index + searchQuery.length),
-        style: style.copyWith(
-          backgroundColor: highlightColor,
-          color: Colors.black87,
+      spans.add(
+        TextSpan(
+          text: text.substring(index, index + searchQuery.length),
+          style: style.copyWith(
+            backgroundColor: highlightColor,
+            color: Colors.black87,
+          ),
         ),
-      ));
+      );
 
       currentIndex = index + searchQuery.length;
     }
@@ -338,7 +349,9 @@ class _ChecklistItemWidgetState extends State<_ChecklistItemWidget> {
           // Checkbox
           Checkbox(
             value: widget.item.isChecked,
-            onChanged: widget.isEditing ? null : (value) => widget.onCheckChanged(),
+            onChanged: widget.isEditing
+                ? null
+                : (value) => widget.onCheckChanged(),
             activeColor: colors.primary,
             checkColor: Colors.white,
             side: BorderSide(color: textColor, width: 2),
@@ -364,8 +377,12 @@ class _ChecklistItemWidgetState extends State<_ChecklistItemWidget> {
                     decoration: const InputDecoration(
                       border: InputBorder.none,
                       isDense: true,
-                      contentPadding: EdgeInsets.symmetric(vertical: 12.0, horizontal: 4.0),
+                      contentPadding: EdgeInsets.symmetric(
+                        vertical: 12.0,
+                        horizontal: 4.0,
+                      ),
                     ),
+                    scrollPadding: const EdgeInsets.only(bottom: 92),
                     onChanged: widget.onTextChanged,
                     onTap: () {
                       if (!_isEditingText && !widget.isEditing) {

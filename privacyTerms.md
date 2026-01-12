@@ -1,7 +1,7 @@
 <div style="max-width: 900px; margin: 0 auto; padding: 20px; line-height: 1.6;">
 
 <h1 style="color: #6366F1; border-bottom: 3px solid #6366F1; padding-bottom: 10px; margin-bottom: 10px;">Privacy Policy for FastVoiceNote</h1>
-<p style="font-style: italic; color: #999; font-size: 0.9em; margin-bottom: 30px;"><strong>Last Updated:</strong> January 11, 2026</p>
+<p style="font-style: italic; color: #999; font-size: 0.9em; margin-bottom: 30px;"><strong>Last Updated:</strong> January 12, 2026</p>
 
 <h2 style="color: #6366F1; margin-top: 30px; margin-bottom: 15px; border-left: 4px solid #6366F1; padding-left: 15px;">Introduction</h2>
 <p>Welcome to <strong>FastVoiceNote</strong>! This Privacy Policy explains how we handle your information when you use our mobile application. We are committed to protecting your privacy and maintaining transparency about our data practices.</p>
@@ -26,7 +26,8 @@
 <p><strong>Important:</strong> We do <strong>NOT</strong> upload your notes, recordings, images, or personal data to our servers or any cloud services. All data remains on your device unless you explicitly choose to share it.</p>
 
 <h3 style="color: #8B93FF; margin-top: 25px; margin-bottom: 10px;">1.2 Data Sent to Third-Party Services</h3>
-<p><strong>No data is sent to third-party services.</strong> Voice transcription, checklist detection, and note processing are performed locally on your device using Whisper.cpp and on-device logic.</p>
+<p><strong>Ads and Monetization:</strong> We use Google AdMob to display advertisements in the application. AdMob may collect certain data from your device, such as device identifiers (e.g., AD-ID), IP address, and interaction data with ads, to provide personalized or non-personalized advertisements. This data is handled according to Google's Privacy Policy.</p>
+<p><strong>Note:</strong> Your personal notes, voice recordings, and images are <strong>NEVER</strong> sent to AdMob or any third-party service; they remain local on your device.</p>
 
 <h2 style="color: #6366F1; margin-top: 30px; margin-bottom: 15px; border-left: 4px solid #6366F1; padding-left: 15px;">2. Permissions Used</h2>
 <p>FastVoiceNote requests only the permissions necessary for core functionality:</p>
@@ -81,14 +82,15 @@
 
 <h3 style="color: #8B93FF; margin-top: 25px; margin-bottom: 10px;">3.2 Internet-Dependent Features</h3>
 <ul style="margin: 10px 0; padding-left: 20px;">
-    <li style="margin-bottom: 8px;"><strong>None required for core features.</strong> Internet may be used only for optional actions such as app updates or sharing content via system apps.</li>
+    <li style="margin-bottom: 8px;"><strong>Advertisements:</strong> Connection to Google AdMob servers to fetch and display ads.</li>
+    <li style="margin-bottom: 8px;"><strong>Optional Actions:</strong> App updates or sharing content via system apps.</li>
 </ul>
 
 <h2 style="color: #6366F1; margin-top: 30px; margin-bottom: 15px; border-left: 4px solid #6366F1; padding-left: 15px;">4. Data Sharing and Disclosure</h2>
 <p><strong>We do NOT sell, rent, or share your personal data</strong>. No audio, text, or images leave your device unless you explicitly share them.</p>
 
 <h3 style="color: #8B93FF; margin-top: 25px; margin-bottom: 10px;">4.1 Third-Party Service Providers</h3>
-<p><strong>No third-party processing.</strong> FastVoiceNote performs transcription and processing on-device.</p>
+<p><strong>Google AdMob:</strong> We use Google AdMob for monetization. Google may use your device information as described in their <a href="https://policies.google.com/privacy" target="_blank" style="color: #6366F1;">Privacy Policy</a>. No personal content (notes/audio) is shared with Google.</p>
 
 <h3 style="color: #8B93FF; margin-top: 25px; margin-bottom: 10px;">4.2 Legal Requirements</h3>
 <p>We may disclose information if required by law, court order, or governmental request, or to:</p>
@@ -113,7 +115,7 @@
 
 <h3 style="color: #8B93FF; margin-top: 25px; margin-bottom: 10px;">5.2 Third-Party Data</h3>
 <ul style="margin: 10px 0; padding-left: 20px;">
-    <li style="margin-bottom: 8px;"><strong>Not applicable:</strong> No third-party processing is used.</li>
+    <li style="margin-bottom: 8px;"><strong>Google AdMob Data:</strong> Retention of ad-related data is managed by Google according to its own data retention policies. You can reset your Advertising ID in your Android device settings.</li>
 </ul>
 
 <h2 style="color: #6366F1; margin-top: 30px; margin-bottom: 15px; border-left: 4px solid #6366F1; padding-left: 15px;">6. Data Security</h2>
@@ -130,7 +132,7 @@
 <p>FastVoiceNote is not intended for children under 13. We do not knowingly collect personal information from children under 13.</p>
 
 <h2 style="color: #6366F1; margin-top: 30px; margin-bottom: 15px; border-left: 4px solid #6366F1; padding-left: 15px;">8. International Data Transfers</h2>
-<p><strong>Not applicable:</strong> We do not use external services; no international data transfers occur.</p>
+<p><strong>Google AdMob:</strong> Ad-related data may be transferred to and processed on servers located outside your country of residence, including to the United States, by Google. Your personal notes and audio recordings never leave your device.</p>
 
 <h2 style="color: #6366F1; margin-top: 30px; margin-bottom: 15px; border-left: 4px solid #6366F1; padding-left: 15px;">9. Your Rights</h2>
 <p>Depending on your location, you may have the following rights:</p>
@@ -165,12 +167,10 @@
 <hr style="margin: 40px 0; border: none; border-top: 1px solid #444;">
 
 <div style="text-align: center; margin-top: 40px; padding: 20px;">
-<p><strong>Document Version:</strong> 1.2</p>
-    <p><strong>Effective Date:</strong> January 11, 2026</p>
-    <p><strong>Last Reviewed:</strong> January 11, 2026</p>
+<p><strong>Document Version:</strong> 1.3</p>
+    <p><strong>Effective Date:</strong> January 12, 2026</p>
+    <p><strong>Last Reviewed:</strong> January 12, 2026</p>
     <p style="margin-top: 20px; color: #999;">© 2026 FastVoiceNote. All rights reserved.</p>
 </div>
 
 </div>
-
-

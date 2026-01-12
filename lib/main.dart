@@ -13,9 +13,17 @@ import 'src/core/utils/quick_voice_intent.dart';
 import 'src/features/notifications/services/notification_service.dart';
 
 import 'src/core/database/app_database.dart';
+import 'src/core/services/ad_service.dart';
+import 'src/core/services/shortcut_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize AdMob
+  await AdService().initialize();
+
+  // Initialize Dynamic Shortcuts
+  ShortcutService().initialize();
 
   // Initialize notification service with error handling
   try {
@@ -54,11 +62,13 @@ Future<void> main() async {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => SettingsProvider(
-          initialLocale: initialLocale,
-          initialThemeMode: initialThemeMode,
-          initialShowTips: initialShowTips,
-        )),
+        ChangeNotifierProvider(
+          create: (_) => SettingsProvider(
+            initialLocale: initialLocale,
+            initialThemeMode: initialThemeMode,
+            initialShowTips: initialShowTips,
+          ),
+        ),
         ChangeNotifierProvider(create: (_) => NotesProvider(database)),
       ],
       child: const FastVoiceNoteApp(),
@@ -91,16 +101,19 @@ class _FastVoiceNoteAppState extends State<FastVoiceNoteApp> {
 
   void _initDeepLinks() {
     _appLinks = AppLinks();
-    
+
     // Handle initial link when app is launched
     _handleInitialLink();
-    
+
     // Handle links when app is already running
-    _linkSubscription = _appLinks.uriLinkStream.listen((Uri uri) {
-      _handleDeepLink(uri);
-    }, onError: (err) {
-      debugPrint('Deep link error: $err');
-    });
+    _linkSubscription = _appLinks.uriLinkStream.listen(
+      (Uri uri) {
+        _handleDeepLink(uri);
+      },
+      onError: (err) {
+        debugPrint('Deep link error: $err');
+      },
+    );
   }
 
   Future<void> _handleInitialLink() async {

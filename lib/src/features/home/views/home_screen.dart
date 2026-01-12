@@ -20,8 +20,10 @@ import '../../transcription/utils/audio_chunker.dart';
 import '../../transcription/utils/meeting_transcription_processor.dart';
 import '../../../core/utils/quick_voice_intent.dart';
 import 'package:vibration/vibration.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import '../../notifications/services/notification_service.dart';
 import '../../settings/providers/settings_provider.dart';
+import '../../../core/services/ad_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -31,6 +33,8 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
+  BannerAd? _bannerAd;
+  bool _isBannerAdLoaded = false;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   late AnimationController _animationController;
   late Animation<double> _animation;
@@ -51,6 +55,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+    _loadFolders();
+    _checkInterstitialAd();
+    _loadBannerAd();
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 300),
@@ -60,8 +67,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       curve: Curves.easeOutBack,
       reverseCurve: Curves.easeInBack,
     );
-    _loadFolders();
-
     // Listen for quick voice note intent from deep link
     _quickVoiceSubscription = QuickVoiceNoteIntent.stream.listen((_) {
       if (mounted) {
@@ -103,12 +108,48 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   @override
   void dispose() {
+    _bannerAd?.dispose();
     _animationController.dispose();
     _tabController.dispose();
     _searchController.dispose();
     _searchFocusNode.dispose();
     _quickVoiceSubscription?.cancel();
     super.dispose();
+  }
+
+  void _checkInterstitialAd() async {
+    final adService = AdService();
+    if (await adService.shouldShowInterstitialOnStartup()) {
+      debugPrint('Triggering interstitial ad request...');
+      await adService.loadInterstitial();
+
+      // Wait dynamicly up to 10 seconds for the ad to be ready
+      int attempts = 0;
+      while (attempts < 20) {
+        // 20 * 500ms = 10s
+        if (adService.showInterstitialIfReady()) {
+          debugPrint('Interstitial ad shown successfully.');
+          break;
+        }
+        await Future.delayed(const Duration(milliseconds: 500));
+        attempts++;
+      }
+
+      if (attempts >= 20) {
+        debugPrint('Interstitial ad failed to show after 10s timeout.');
+      }
+    }
+  }
+
+  void _loadBannerAd() {
+    _bannerAd = AdService().createBannerAd('home')
+      ..load().then((_) {
+        if (mounted) {
+          setState(() {
+            _isBannerAdLoaded = true;
+          });
+        }
+      });
   }
 
   void _toggleFab() {
@@ -931,6 +972,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           children: _buildTabViews(notes, context),
         ),
       ),
+      bottomNavigationBar: _isBannerAdLoaded && _bannerAd != null
+          ? Container(
+              alignment: Alignment.center,
+              width: _bannerAd!.size.width.toDouble(),
+              height: _bannerAd!.size.height.toDouble(),
+              child: AdWidget(ad: _bannerAd!),
+            )
+          : null,
       floatingActionButton: Stack(
         alignment: Alignment.bottomRight,
         children: [
