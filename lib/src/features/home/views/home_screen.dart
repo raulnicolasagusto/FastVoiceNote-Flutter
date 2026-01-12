@@ -12,6 +12,7 @@ import '../../notes/widgets/create_folder_modal.dart';
 import 'package:intl/intl.dart';
 import '../../notes/models/note.dart';
 import '../../notes/models/checklist_utils.dart';
+import '../../notes/models/rich_text_utils.dart';
 import '../../transcription/services/audio_recorder_service.dart';
 import '../../transcription/services/meeting_recorder_service.dart';
 import '../../transcription/widgets/recording_dialog.dart';
@@ -217,7 +218,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         if (note.title.toLowerCase().contains(_searchQuery)) return true;
 
         // Search in content (including checklist items)
-        final content = ChecklistUtils.getPreview(note.content).toLowerCase();
+        final content =
+            (RichTextUtils.isRichText(note.content)
+                    ? RichTextUtils.getPlainText(note.content)
+                    : ChecklistUtils.getPreview(note.content))
+                .toLowerCase();
         if (content.contains(_searchQuery)) return true;
 
         // Search in date
@@ -281,7 +286,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               itemCount: notesToShow.length,
               itemBuilder: (context, index) {
                 final note = notesToShow[index];
-                final preview = ChecklistUtils.getPreview(note.content);
+                final preview = RichTextUtils.isRichText(note.content)
+                    ? RichTextUtils.getPlainText(note.content)
+                    : ChecklistUtils.getPreview(note.content);
                 final isSelected = _selectedNotes.contains(note.id);
                 return GestureDetector(
                   onTap: () {

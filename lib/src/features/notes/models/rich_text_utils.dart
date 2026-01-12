@@ -12,9 +12,17 @@ class RichTextUtils {
 
   /// Convert plain text to Delta JSON string with prefix
   static String plainToRich(String text) {
-    final delta = Delta()
-      ..insert(text)
-      ..insert('\n');
+    if (text.isEmpty) {
+      return '$richTextPrefix${jsonEncode(Delta().toJson())}';
+    }
+
+    final delta = Delta();
+    final lines = text.split('\n');
+    for (var i = 0; i < lines.length; i++) {
+      delta.insert(lines[i]);
+      delta.insert('\n');
+    }
+
     final json = jsonEncode(delta.toJson());
     return '$richTextPrefix$json';
   }
@@ -47,9 +55,13 @@ class RichTextUtils {
       final json = jsonDecode(jsonString) as List;
       return Delta.fromJson(json);
     } catch (e) {
-      return Delta()
-        ..insert(content)
-        ..insert('\n');
+      final delta = Delta();
+      final lines = content.split('\n');
+      for (var i = 0; i < lines.length; i++) {
+        delta.insert(lines[i]);
+        delta.insert('\n');
+      }
+      return delta;
     }
   }
 

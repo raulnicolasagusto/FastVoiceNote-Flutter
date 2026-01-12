@@ -1373,37 +1373,48 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                   );
                 },
                 child: _isEditingContent
-                    ? quill.QuillSimpleToolbar(
+                    ? Container(
                         key: const ValueKey('quill_toolbar'),
-                        controller: _quillController,
-                        config: quill.QuillSimpleToolbarConfig(
-                          showUndo: false,
-                          showRedo: false,
-                          showFontFamily: false,
-                          showFontSize: false,
-                          showBoldButton: true,
-                          showItalicButton: true,
-                          showSmallButton: false,
-                          showUnderLineButton: false,
-                          showStrikeThrough: true,
-                          showInlineCode: false,
-                          showColorButton: false,
-                          showBackgroundColorButton: true,
-                          showClearFormat: false,
-                          showAlignmentButtons: false,
-                          showHeaderStyle: true,
-                          showListBullets: false,
-                          showListNumbers: false,
-                          showListCheck: false,
-                          showCodeBlock: false,
-                          showQuote: false,
-                          showIndent: false,
-                          showLink: false,
-                          showDirection: false,
-                          showSearchButton: false,
-                          showSubscript: false,
-                          showSuperscript: false,
-                          headerStyleType: quill.HeaderStyleType.original,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: [
+                              quill.QuillToolbarToggleStyleButton(
+                                controller: _quillController,
+                                attribute: quill.Attribute.bold,
+                                options:
+                                    const quill.QuillToolbarToggleStyleButtonOptions(),
+                              ),
+                              quill.QuillToolbarToggleStyleButton(
+                                controller: _quillController,
+                                attribute: quill.Attribute.italic,
+                                options:
+                                    const quill.QuillToolbarToggleStyleButtonOptions(),
+                              ),
+                              quill.QuillToolbarToggleStyleButton(
+                                controller: _quillController,
+                                attribute: quill.Attribute.strikeThrough,
+                                options:
+                                    const quill.QuillToolbarToggleStyleButtonOptions(),
+                              ),
+                              const SizedBox(width: 8),
+                              quill.QuillToolbarSelectHeaderStyleDropdownButton(
+                                controller: _quillController,
+                                options:
+                                    const quill.QuillToolbarSelectHeaderStyleDropdownButtonOptions(),
+                              ),
+                              quill.QuillToolbarColorButton(
+                                controller: _quillController,
+                                isBackground: true,
+                                options:
+                                    const quill.QuillToolbarColorButtonOptions(),
+                              ),
+                            ],
+                          ),
                         ),
                       )
                     : const SizedBox.shrink(),
