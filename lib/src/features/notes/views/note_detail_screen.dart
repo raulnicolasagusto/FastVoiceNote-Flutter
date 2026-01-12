@@ -30,6 +30,8 @@ import '../services/ocr_service.dart';
 import 'drawing_canvas_screen.dart';
 import 'image_preview_screen.dart';
 import 'package:open_filex/open_filex.dart';
+import 'package:flutter_quill/flutter_quill.dart' as quill;
+import '../models/rich_text_utils.dart';
 
 class NoteDetailScreen extends StatefulWidget {
   final String noteId;
@@ -45,6 +47,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
   bool _isBannerAdLoaded = false;
   late TextEditingController _titleController;
   late TextEditingController _contentController;
+  late quill.QuillController _quillController;
   bool _isEditingTitle = false;
   bool _isEditingContent = false;
   bool _isChecklistEditing = false;
@@ -81,6 +84,22 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
         ? ChecklistUtils.getText(content)
         : content;
     _contentController = TextEditingController(text: textContent);
+
+    // Initialize Quill Controller
+    final delta = RichTextUtils.getDelta(textContent);
+    _quillController = quill.QuillController(
+      document: quill.Document.fromDelta(delta),
+      selection: const TextSelection.collapsed(offset: 0),
+    );
+
+    // Sync _contentController when Quill changes (needed for search/char count)
+    _quillController.addListener(() {
+      final plain = _quillController.document.toPlainText().trim();
+      if (_contentController.text != plain) {
+        _contentController.text = plain;
+        if (mounted) setState(() {});
+      }
+    });
 
     _searchController.addListener(_onSearchChanged);
     _loadAttachments();
@@ -122,6 +141,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
     _bannerAd?.dispose();
     _titleController.dispose();
     _contentController.dispose();
+    _quillController.dispose();
     _searchController.dispose();
     _searchFocusNode.dispose();
     _ocrService.dispose();
@@ -173,7 +193,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
       final items = ChecklistUtils.jsonToItems(note.content);
       final newContent = ChecklistUtils.itemsToJson(
         items,
-        _contentController.text,
+        RichTextUtils.deltaToStorage(_quillController.document.toDelta()),
       );
       await context.read<NotesProvider>().updateNote(
         widget.noteId,
@@ -183,7 +203,9 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
       // Si no hay checklist, actualizar el contenido normalmente
       await context.read<NotesProvider>().updateNote(
         widget.noteId,
-        content: _contentController.text,
+        content: RichTextUtils.deltaToStorage(
+          _quillController.document.toDelta(),
+        ),
       );
     }
 
@@ -1341,6 +1363,52 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                 ),
               ),
 
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                transitionBuilder: (Widget child, Animation<double> animation) {
+                  return SizeTransition(
+                    sizeFactor: animation,
+                    axisAlignment: -1.0,
+                    child: child,
+                  );
+                },
+                child: _isEditingContent
+                    ? quill.QuillSimpleToolbar(
+                        key: const ValueKey('quill_toolbar'),
+                        controller: _quillController,
+                        config: quill.QuillSimpleToolbarConfig(
+                          showUndo: false,
+                          showRedo: false,
+                          showFontFamily: false,
+                          showFontSize: false,
+                          showBoldButton: true,
+                          showItalicButton: true,
+                          showSmallButton: false,
+                          showUnderLineButton: false,
+                          showStrikeThrough: true,
+                          showInlineCode: false,
+                          showColorButton: false,
+                          showBackgroundColorButton: true,
+                          showClearFormat: false,
+                          showAlignmentButtons: false,
+                          showHeaderStyle: true,
+                          showListBullets: false,
+                          showListNumbers: false,
+                          showListCheck: false,
+                          showCodeBlock: false,
+                          showQuote: false,
+                          showIndent: false,
+                          showLink: false,
+                          showDirection: false,
+                          showSearchButton: false,
+                          showSubscript: false,
+                          showSuperscript: false,
+                          headerStyleType: quill.HeaderStyleType.original,
+                        ),
+                      )
+                    : const SizedBox.shrink(),
+              ),
+
               // Search bar or Date and character count
               if (_isSearching)
                 Padding(
@@ -1505,9 +1573,12 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                           final hasChecklist = ChecklistUtils.hasChecklist(
                             note.content,
                           );
-                          final textContent = ChecklistUtils.getText(
+                          final isRichText = RichTextUtils.isRichText(
                             note.content,
                           );
+                          final textContent = isRichText
+                              ? RichTextUtils.getPlainText(note.content)
+                              : ChecklistUtils.getText(note.content);
                           final isEditingContent = _isEditingContent;
 
                           return Column(
@@ -1523,26 +1594,30 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                                   }
                                 },
                                 child: isEditingContent
-                                    ? TextField(
-                                        controller: _contentController,
-                                        autofocus: true,
-                                        maxLines: null,
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodyLarge
-                                            ?.copyWith(color: textColor),
-                                        decoration: InputDecoration(
-                                          border: InputBorder.none,
-                                          hintText: 'Note',
-                                          hintStyle: TextStyle(
-                                            color: hintColor,
+                                    ? SizedBox(
+                                        height: 400,
+                                        child: quill.QuillEditor.basic(
+                                          controller: _quillController,
+                                          config: quill.QuillEditorConfig(
+                                            autoFocus: true,
+                                            expands: false,
+                                            padding: EdgeInsets.zero,
+                                            scrollable: true,
+                                            placeholder: 'Note',
                                           ),
                                         ),
-                                        scrollPadding: const EdgeInsets.only(
-                                          bottom: 92,
+                                      )
+                                    : isRichText
+                                    ? AbsorbPointer(
+                                        child: quill.QuillEditor.basic(
+                                          controller: _quillController,
+                                          config: quill.QuillEditorConfig(
+                                            autoFocus: false,
+                                            expands: false,
+                                            padding: EdgeInsets.zero,
+                                            scrollable: false,
+                                          ),
                                         ),
-                                        onTapOutside: (_) => _saveContent(),
-                                        onSubmitted: (_) => _saveContent(),
                                       )
                                     : textContent.isNotEmpty || !hasChecklist
                                     ? RichText(

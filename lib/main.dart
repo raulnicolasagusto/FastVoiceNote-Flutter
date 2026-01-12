@@ -11,6 +11,7 @@ import 'src/features/notes/providers/notes_provider.dart';
 import 'src/core/l10n/generated/app_localizations.dart';
 import 'src/core/utils/quick_voice_intent.dart';
 import 'src/features/notifications/services/notification_service.dart';
+import 'package:flutter_quill/flutter_quill.dart';
 
 import 'src/core/database/app_database.dart';
 import 'src/core/services/ad_service.dart';
@@ -154,6 +155,7 @@ class _FastVoiceNoteAppState extends State<FastVoiceNoteApp> {
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
+        FlutterQuillLocalizations.delegate,
       ],
       supportedLocales: const [
         Locale('en'), // English
