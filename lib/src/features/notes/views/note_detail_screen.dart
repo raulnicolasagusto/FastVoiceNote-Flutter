@@ -212,6 +212,70 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
     setState(() => _isEditingContent = false);
   }
 
+  void _showTextColorPicker(bool isBackground) {
+    // Preset colors
+    final List<Color> presetColors = [
+      Colors.yellow,
+      Colors.orange,
+      Colors.red,
+      Colors.pink,
+      Colors.purple,
+      Colors.blue,
+      Colors.lightBlue,
+      Colors.green,
+      Colors.lightGreen,
+      Colors.brown,
+      Colors.grey,
+    ];
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Background Color'),
+        content: Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: presetColors.map((color) {
+            return InkWell(
+              onTap: () {
+                final hex =
+                    '#${color.value.toRadixString(16).padLeft(8, '0').substring(2)}';
+                _quillController.formatSelection(
+                  quill.BackgroundAttribute(hex),
+                );
+                Navigator.pop(context);
+              },
+              child: Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey.shade300, width: 2),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              _quillController.formatSelection(
+                const quill.BackgroundAttribute(null),
+              );
+              Navigator.pop(context);
+            },
+            child: const Text('Clear'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _onDoneEditing() {
     FocusScope.of(context).unfocus();
     if (_isEditingTitle) _saveTitle();
@@ -1169,7 +1233,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
     );
   }
 
-  void _showColorPicker() {
+  void _showNoteColorPicker() {
     final note = context.read<NotesProvider>().getNoteById(widget.noteId);
     if (note == null) return;
 
@@ -1300,7 +1364,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                     ),
                     IconButton(
                       icon: const Icon(Icons.palette_outlined),
-                      onPressed: _showColorPicker,
+                      onPressed: _showNoteColorPicker,
                     ),
                     const Spacer(),
                     Builder(
@@ -1410,8 +1474,12 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                               quill.QuillToolbarColorButton(
                                 controller: _quillController,
                                 isBackground: true,
-                                options:
-                                    const quill.QuillToolbarColorButtonOptions(),
+                                options: quill.QuillToolbarColorButtonOptions(
+                                  customOnPressedCallback:
+                                      (controller, isBackground) async {
+                                        _showTextColorPicker(isBackground);
+                                      },
+                                ),
                               ),
                             ],
                           ),
