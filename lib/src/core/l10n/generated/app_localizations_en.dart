@@ -9,6 +9,43 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String get onboardingSkip => 'Skip';
+
+  @override
+  String get onboardingStart => 'Get Started';
+
+  @override
+  String get onboardingNext => 'Next';
+
+  @override
+  String get onboardingStep1Title => 'Quick Recording Shortcut';
+
+  @override
+  String get onboardingStep1Desc =>
+      'Long press the app icon to start recording immediately. Transcribe your voice notes instantly without opening the app first.';
+
+  @override
+  String get onboardingStep2Title => 'Smart Checklists';
+
+  @override
+  String get onboardingStep2Desc =>
+      'Create checklists with your voice! Just say: \"New shopping list, sugar, eggs, coffee...\" and we\'ll organize it for you.';
+
+  @override
+  String get onboardingStep3Title => 'Meeting Recorder';
+
+  @override
+  String get onboardingStep3Desc =>
+      'Record long meetings up to 1 hour. We\'ll transcribe everything and break it down for you. Perfect for lectures and business meetings.';
+
+  @override
+  String get onboardingStep4Title => 'Rich Media Notes';
+
+  @override
+  String get onboardingStep4Desc =>
+      'Add photos, drawings, notifications, and files to your notes. FastVoiceNote is completely free. Enjoy capturing your ideas!';
+
+  @override
   String get appTitle => 'FastVoiceNote';
 
   @override

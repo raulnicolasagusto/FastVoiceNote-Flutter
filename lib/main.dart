@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:app_links/app_links.dart';
 import 'dart:async';
+import 'package:go_router/go_router.dart';
 import 'src/core/router/app_router.dart';
 import 'src/core/theme/app_theme.dart';
 import 'src/features/settings/providers/settings_provider.dart';
@@ -38,6 +39,7 @@ Future<void> main() async {
   Locale? initialLocale;
   ThemeMode? initialThemeMode;
   bool? initialShowTips;
+  bool initialOnboardingSeen = false;
   try {
     final prefs = await SharedPreferences.getInstance();
     final code = prefs.getString('app_locale_code');
@@ -57,6 +59,7 @@ Future<void> main() async {
         break;
     }
     initialShowTips = prefs.getBool('app_show_tips');
+    initialOnboardingSeen = prefs.getBool('onboarding_seen') ?? false;
   } catch (_) {}
 
   final database = AppDatabase();
@@ -72,13 +75,14 @@ Future<void> main() async {
         ),
         ChangeNotifierProvider(create: (_) => NotesProvider(database)),
       ],
-      child: const FastVoiceNoteApp(),
+      child: FastVoiceNoteApp(onboardingSeen: initialOnboardingSeen),
     ),
   );
 }
 
 class FastVoiceNoteApp extends StatefulWidget {
-  const FastVoiceNoteApp({super.key});
+  final bool onboardingSeen;
+  const FastVoiceNoteApp({super.key, required this.onboardingSeen});
 
   @override
   State<FastVoiceNoteApp> createState() => _FastVoiceNoteAppState();
@@ -87,10 +91,12 @@ class FastVoiceNoteApp extends StatefulWidget {
 class _FastVoiceNoteAppState extends State<FastVoiceNoteApp> {
   late AppLinks _appLinks;
   StreamSubscription? _linkSubscription;
+  late final GoRouter _router;
 
   @override
   void initState() {
     super.initState();
+    _router = createAppRouter(widget.onboardingSeen);
     _initDeepLinks();
   }
 
@@ -149,7 +155,7 @@ class _FastVoiceNoteAppState extends State<FastVoiceNoteApp> {
       darkTheme: AppTheme.darkTheme,
       themeMode: settings.themeMode,
       locale: settings.locale,
-      routerConfig: appRouter,
+      routerConfig: _router,
       localizationsDelegates: const [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,

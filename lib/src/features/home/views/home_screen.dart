@@ -980,11 +980,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         ),
       ),
       bottomNavigationBar: _isBannerAdLoaded && _bannerAd != null
-          ? Container(
-              alignment: Alignment.center,
-              width: _bannerAd!.size.width.toDouble(),
-              height: _bannerAd!.size.height.toDouble(),
-              child: AdWidget(ad: _bannerAd!),
+          ? SafeArea(
+              child: Container(
+                alignment: Alignment.center,
+                width: _bannerAd!.size.width.toDouble(),
+                height: _bannerAd!.size.height.toDouble(),
+                child: AdWidget(ad: _bannerAd!),
+              ),
             )
           : null,
       floatingActionButton: Stack(

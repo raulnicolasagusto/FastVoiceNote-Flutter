@@ -4,8 +4,9 @@
 [![Dart](https://img.shields.io/badge/Dart-3.0+-blue.svg)](https://dart.dev/)
 [![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20iOS-green.svg)](https://flutter.dev/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/Version-1.0.9-brightgreen.svg)](https://github.com/yourusername/FastVoiceNote-Flutter/releases)
 
-A powerful, AI-powered voice note-taking application built with **Flutter** that leverages **Whisper.cpp** for on-device speech-to-text transcription. Create notes, checklists, and reminders using your voice - all processed locally with no internet connection required.
+A powerful, AI-powered voice note-taking application built with **Flutter** that leverages **Whisper.cpp** for on-device speech-to-text transcription. Create notes, checklists, and reminders using your voice - all processed locally with no internet connection required. Now featuring a **rich text editor** for enhanced formatting options.
 
 ## ✨ Key Features
 
@@ -40,6 +41,15 @@ A powerful, AI-powered voice note-taking application built with **Flutter** that
 - **Language-aware** - Uses app's selected language (EN/ES/PT) from settings
 - **Error recovery** - Never aborts due to single chunk failures
 
+### ✍️ **Rich Text Editor**
+- **Text formatting** - Bold, italic, and strikethrough styling
+- **Headers** - H1, H2, H3 for structured content organization
+- **Color highlighting** - 11 preset background colors for text emphasis
+- **Simple color picker** - Quick selection grid with yellow, orange, red, pink, purple, blue, light blue, green, light green, brown, and grey
+- **Seamless integration** - Works alongside existing plain text and checklist notes
+- **Auto-save** - Formatting preserved automatically
+- **Read-only preview** - Clean display in view mode
+
 ### 🎨 **Rich Note Features**
 - **Color-coded notes** with 12 predefined color themes
 - **Pin favorites** for quick access
@@ -53,24 +63,27 @@ A powerful, AI-powered voice note-taking application built with **Flutter** that
 ### 🎨 **Drawing Canvas (Sketches)**
 - **Fluid drawing engine** - High-performance sketching with CustomPainter
 - **Smart Eraser Tool** - Gradually remove content with adjustable thickness
-- **Pro Color Palette** - Pick any color for your annotations and sketches
-- **Variable Brush Thickness** - From fine details to broad strokes
-- **Undo/Redo support** - Effortless correction for your drawings
-- **Local Persistence** - Drawings are saved as PNG and stored as note attachments
+### ⏰ **Smart Reminders &# FastVoiceNote
 
+**Version:** 1.0.9 (Build 11)
 
-### ⏰ **Smart Reminders & Notifications**
-- **Scheduled notifications** for time-sensitive notes
-- **On-device alarm scheduling** with exact timing
-- **Toggle on/off** - easily activate/deactivate reminders
-- **Persistent across reboots** - reminders survive device restarts
-- **Battery-optimized** - works with Android's Doze mode
-- **Custom notification icon** with Material Design
-- **Multi-language support** for reminder messages
+A powerful Flutter-based note-taking app with voice transcription, rich text editing, and smart features.
 
-### 🌍 **Complete Internationalization**
-- **3 languages fully supported**: English, Spanish, Portuguese
-- **Automatic language detection** for voice transcription
+## ✨ Features
+
+- 🎙️ **Voice Recording & Transcription**: Instant voice-to-text conversion
+- 📝 **Rich Text Editor**: Format your notes with headers, bold, italic, strikethrough, and color highlighting
+- ✅ **Smart Checklists**: Create voice-activated checklists with "new list" command
+- 🔔 **Voice Reminders**: Set reminders by voice (e.g., "remind me tomorrow at 4 PM")
+- 📸 **Image & File Attachments**: Add photos, drawings, and files to notes
+- 🎨 **Customizable Colors**: Personalize each note with vibrant colors
+- 🔒 **Note Locking**: Protect important notes from accidental edits
+- 🔍 **Smart Search**: Find notes by title, content, or date
+- 📌 **Pin Important Notes**: Keep frequently used notes at the top
+- 🗂️ **Folder Organization**: Organize notes into custom folders
+- 🎯 **Quick Actions**: App shortcuts for instant voice notes
+- 🌐 **Multi-language**: English, Spanish, and Portuguese support
+- 🌙 **Dark Mode**: Easy on the eyes, works in any lighting
 - **Dynamic UI translations** with proper localization
 - **Cultural considerations** for date/time formatting
 

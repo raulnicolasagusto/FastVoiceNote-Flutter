@@ -100,6 +100,72 @@ abstract class AppLocalizations {
     Locale('pt'),
   ];
 
+  /// No description provided for @onboardingSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get onboardingSkip;
+
+  /// No description provided for @onboardingStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Get Started'**
+  String get onboardingStart;
+
+  /// No description provided for @onboardingNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get onboardingNext;
+
+  /// No description provided for @onboardingStep1Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick Recording Shortcut'**
+  String get onboardingStep1Title;
+
+  /// No description provided for @onboardingStep1Desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Long press the app icon to start recording immediately. Transcribe your voice notes instantly without opening the app first.'**
+  String get onboardingStep1Desc;
+
+  /// No description provided for @onboardingStep2Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Smart Checklists'**
+  String get onboardingStep2Title;
+
+  /// No description provided for @onboardingStep2Desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Create checklists with your voice! Just say: \"New shopping list, sugar, eggs, coffee...\" and we\'ll organize it for you.'**
+  String get onboardingStep2Desc;
+
+  /// No description provided for @onboardingStep3Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Meeting Recorder'**
+  String get onboardingStep3Title;
+
+  /// No description provided for @onboardingStep3Desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Record long meetings up to 1 hour. We\'ll transcribe everything and break it down for you. Perfect for lectures and business meetings.'**
+  String get onboardingStep3Desc;
+
+  /// No description provided for @onboardingStep4Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Rich Media Notes'**
+  String get onboardingStep4Title;
+
+  /// No description provided for @onboardingStep4Desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Add photos, drawings, notifications, and files to your notes. FastVoiceNote is completely free. Enjoy capturing your ideas!'**
+  String get onboardingStep4Desc;
+
   /// No description provided for @appTitle.
   ///
   /// In en, this message translates to:

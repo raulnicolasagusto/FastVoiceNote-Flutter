@@ -9,6 +9,43 @@ class AppLocalizationsPt extends AppLocalizations {
   AppLocalizationsPt([String locale = 'pt']) : super(locale);
 
   @override
+  String get onboardingSkip => 'Pular';
+
+  @override
+  String get onboardingStart => 'Começar';
+
+  @override
+  String get onboardingNext => 'Próximo';
+
+  @override
+  String get onboardingStep1Title => 'Atalho de Gravação Rápida';
+
+  @override
+  String get onboardingStep1Desc =>
+      'Pressione e segure o ícone do app para gravar imediatamente. Transcreva suas notas de voz sem abrir o aplicativo primeiro.';
+
+  @override
+  String get onboardingStep2Title => 'Listas Inteligentes';
+
+  @override
+  String get onboardingStep2Desc =>
+      'Crie listas com sua voz! Basta dizer: \"Nova lista de compras, açúcar, ovos, café...\" e nós organizamos para você.';
+
+  @override
+  String get onboardingStep3Title => 'Gravador de Reuniões';
+
+  @override
+  String get onboardingStep3Desc =>
+      'Grave reuniões longas de até 1 hora. Transcrevemos tudo e organizamos para você. Perfeito para aulas e reuniões de negócios.';
+
+  @override
+  String get onboardingStep4Title => 'Notas Multimídia';
+
+  @override
+  String get onboardingStep4Desc =>
+      'Adicione fotos, desenhos, notificações e arquivos às suas notas. O FastVoiceNote é totalmente gratuito. Aproveite para capturar suas ideias!';
+
+  @override
   String get appTitle => 'FastVoiceNote';
 
   @override
