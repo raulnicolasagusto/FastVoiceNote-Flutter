@@ -151,6 +151,33 @@ class _ChecklistWidgetState extends State<ChecklistWidget> {
     });
   }
 
+  void _addItemAfter(String currentItemId) {
+    setState(() {
+      final index = _items.indexWhere((item) => item.id == currentItemId);
+      if (index != -1) {
+        final newId = ChecklistUtils.generateItemId();
+        final newItem = ChecklistItem(id: newId, text: '');
+
+        // Insert after current item
+        if (index + 1 < _items.length) {
+          _items.insert(index + 1, newItem);
+        } else {
+          _items.add(newItem);
+        }
+
+        _controllers[newId] = TextEditingController(text: '');
+        _focusNodes[newId] = FocusNode();
+        _isEditing = true;
+        _updateItems();
+
+        // Focus on the new item after build
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _focusNodes[newId]?.requestFocus();
+        });
+      }
+    });
+  }
+
   void _deleteItem(String itemId) {
     setState(() {
       _controllers[itemId]?.dispose();
@@ -211,6 +238,7 @@ class _ChecklistWidgetState extends State<ChecklistWidget> {
             onDelete: () => _deleteItem(item.id),
             onEditModeRequested: widget.onEditModeRequested,
             searchQuery: widget.searchQuery,
+            onSubmitted: () => _addItemAfter(item.id),
           );
         }),
 
@@ -267,7 +295,9 @@ class _ChecklistItemWidget extends StatefulWidget {
   final Function(String) onTextChanged;
   final VoidCallback onDelete;
   final VoidCallback? onEditModeRequested;
+  final VoidCallback? onEditModeRequested;
   final String searchQuery;
+  final VoidCallback? onSubmitted;
 
   const _ChecklistItemWidget({
     super.key,
@@ -281,7 +311,9 @@ class _ChecklistItemWidget extends StatefulWidget {
     required this.onTextChanged,
     required this.onDelete,
     this.onEditModeRequested,
+    this.onEditModeRequested,
     this.searchQuery = '',
+    this.onSubmitted,
   });
 
   @override
@@ -401,7 +433,9 @@ class _ChecklistItemWidgetState extends State<_ChecklistItemWidget> {
                       }
                     },
                     onSubmitted: (value) {
-                      if (!widget.isEditing) {
+                      if (widget.isEditing) {
+                        widget.onSubmitted?.call();
+                      } else {
                         setState(() {
                           _isEditingText = false;
                         });
